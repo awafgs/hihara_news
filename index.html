@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>日原日報オンライン - 最新ニュース</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* フォント設定: 日本語と英語の視認性の高いフォントを優先 */
+        body {
+            font-family: 'Inter', 'Noto Sans JP', sans-serif;
+            background-color: #f8f9fa; /* ややオフホワイトの背景 */
+            scroll-behavior: smooth; /* ナビゲーションのジャンプをスムーズに */
+        }
+        /* 新聞の見出し風のフォント設定 */
+        h1, h2, h3 {
+            font-family: 'Inter', 'Noto Serif JP', serif;
+        }
+        /* 記事本文内の改行を反映 */
+        .whitespace-pre-wrap {
+            white-space: pre-wrap;
+        }
+        /* モーダルのアニメーション */
+        .modal-enter {
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+        .modal-enter-active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .modal-exit {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .modal-exit-active {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+
+        /* カテゴリリストのホバーエフェクトを強調 */
+        .article-list-item {
+            transition: all 0.2s ease-in-out;
+        }
+        .article-list-item:hover {
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body class="text-gray-900 antialiased">
+
+    <header class="bg-white py-6 border-b-4 border-red-600 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center">
+                <h1 class="text-4xl md:text-6xl font-extrabold text-gray-900 tracking-tight pb-2 leading-none">
+                    日原日報オンライン
+                </h1>
+                </div>
+
+            <div class="flex justify-between items-end mt-1 border-t pt-2 border-gray-200">
+                <p class="header-info text-sm text-gray-600 font-medium">公正な情報を読者に届け、地域の発展と情報の伝達、保管に尽くす。</p>
+                <div id="date-display" class="text-sm font-semibold text-gray-700">
+                    </div>
+            </div>
+        </div>
+    </header>
+
+    <nav class="bg-gray-800 shadow-xl sticky top-0 z-10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <ul id="nav-list" class="flex space-x-4 md:space-x-8 overflow-x-auto py-2">
+                <li><a href="#main-content" class="text-white hover:text-red-400 px-3 py-2 rounded-md text-sm font-medium transition duration-150">トップ一覧</a></li>
+                </ul>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10" id="main-content">
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            
+            <main class="lg:col-span-3 space-y-12">
+                
+                <section id="categorized-news-container" class="space-y-12">
+                    <h2 class="text-3xl font-bold mb-6 border-b-4 border-gray-400 pb-2">最新記事一覧（カテゴリ分類済み）</h2>
+                    <div id="loading-initial" class="text-center py-12">
+                         <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto mb-4"></div>
+                         <p class="text-gray-600">記事データを読み込み中...</p>
+                    </div>
+                </section>
+                
+            </main>
+            
+            <aside class="lg:col-span-1">
+                <div class="sticky top-20 space-y-8">
+                    
+                    <div class="bg-white p-6 rounded-lg shadow-xl border-t-4 border-gray-400">
+                        <h3 class="text-xl font-bold mb-4 pb-2 border-b">コラム：日原の視点</h3>
+                        <p class="text-sm text-gray-700 italic">
+                            「地域の声」を未来へつなぐ。日原の課題と可能性を深く掘り下げます。
+                        </p>
+                        <ul class="mt-4 space-y-2">
+                            <li class="border-b pb-2"><a href="#" class="text-sm hover:text-red-600">・少子高齢化と地域経済の活性化</a></li>
+                            <li class="border-b pb-2"><a href="#" class="text-sm hover:text-red-600">・教育のデジタル化、その光と影</a></li>
+                            <li><a href="#" class="text-sm hover:text-red-600">・市民参加型ガバナンスの進展</a></li>
+                        </ul>
+                    </div>
+
+                    <div class="bg-yellow-50 p-6 rounded-lg border border-yellow-200 shadow-md text-center">
+                        <p class="text-xs font-semibold text-yellow-800 mb-2">【PR】</p>
+                        <h4 class="text-lg font-bold text-gray-800">日原特産フルーツのオンライン販売開始！</h4>
+                        <p class="text-sm text-gray-600 mt-1">今が旬の「日原みかん」を産地直送でお届けします。</p>
+                        <button class="mt-4 bg-red-600 text-white px-4 py-2 rounded-full text-sm font-semibold hover:bg-red-700 transition duration-150 shadow-md">
+                            詳細を見る
+                        </button>
+                    </div>
+
+                </div>
+            </aside>
+            
+        </div>
+    </div>
+    
+    <div id="article-modal" class="fixed inset-0 bg-gray-900 bg-opacity-75 z-50 hidden transition-opacity duration-300 overflow-y-auto">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white w-full max-w-2xl mx-auto rounded-xl shadow-2xl p-6 md:p-8 transform transition-all duration-300">
+                <div class="flex justify-between items-center border-b pb-3 mb-4">
+                    <h2 id="modal-title" class="text-2xl font-bold text-gray-800">記事詳細</h2>
+                    <button onclick="hideArticleContent()" class="text-gray-400 hover:text-gray-600 text-3xl leading-none">&times;</button>
+                </div>
+                
+                <div id="article-content-display">
+                    </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="message-box" class="fixed bottom-4 right-4 p-3 rounded-lg shadow-xl z-50 opacity-0 hidden transition-opacity duration-300" role="alert"></div>
+
+    <footer class="bg-gray-800 text-white py-8 border-t-4 border-red-600 mt-10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <p class="text-sm font-light mb-2">© 2025 株式会社日原日報</p>
+            <p class="text-xs font-extralight text-gray-400">日原県日原市 | TEL: 0120-XXX-XXXX | 編集長: 山田太郎</p>
+            <div class="mt-4 space-x-4 text-sm">
+                <a href="#" class="hover:text-red-400 transition duration-150">会社概要</a>
+                <span class="text-gray-600">|</span>
+                <a href="#" class="hover:text-red-400 transition duration-150">プライバシーポリシー</a>
+                <span class="text-gray-600">|</span>
+                <a href="#" class="hover:text-red-400 transition duration-150">採用情報</a>
+            </div>
+        </div>
+    </footer>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, query, orderBy, onSnapshot, setLogLevel, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        setLogLevel('debug'); // Firestoreのログレベルを設定
+
+        // Firebaseとアプリのグローバル変数
+        let app;
+        let db;
+        let auth;
+        let userId;
+        let allArticles = []; // 全記事を保持するための配列
+        const MAX_ARTICLES_PER_CATEGORY = 6; // カテゴリごとの最大記事数 (自動削除の基準)
+
+        // =======================================================================
+        // 【重要】ここにユーザーの実際のFirebase設定情報を直接記述します。
+        // ※以下の値は動作確認用のダミーです。ご自身のプロジェクト設定に置き換えてください。
+        const firebaseConfig = {
+            apiKey: "AIzaSyAfMuJXDjc87Q9CwabZNn4sw2fTd3ofHag", 
+            authDomain: "hiharanippo.firebaseapp.com",
+            projectId: "hiharanippo", 
+            storageBucket: "hiharanippo.firebasestorage.app",
+            messagingSenderId: "853955512604",
+            appId: "1:853955512604:web:dd3e51b06bdd1e2b7292d9",
+            measurementId: "G-B4S4YXZT0D"
+        };
+        const appId = firebaseConfig.appId; // FirebaseConfigからappIdを取得
+        const initialAuthToken = null; // 認証トークンは使用しない (匿名認証を利用)
+        // =======================================================================
+        
+        // 許可されたカテゴリリスト (ナビゲーションと分類に使用)
+        const ALLOWED_CATEGORIES = ["地域社会", "経済・ビジネス", "スポーツ", "文化", "社説・主張"];
+
+        /**
+         * Firebaseの初期化と認証を行います。
+         */
+        async function initFirebase() {
+            console.log("Firebase初期化中...");
+            
+            // 現在の日付を表示
+            updateDate();
+            renderCategoryNav();
+
+            try {
+                app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+
+                // 認証処理
+                if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                } else {
+                    await signInAnonymously(auth);
+                }
+                
+                userId = auth.currentUser?.uid || crypto.randomUUID();
+                console.log(`Authenticated as User ID: ${userId}`);
+
+                // 記事のリアルタイム読み込みを開始
+                loadArticles();
+
+            } catch (error) {
+                console.error("Firebase初期化エラー:", error);
+                showMessage('Firebaseの初期化に失敗しました。記事リストが表示できません。', 'error');
+                renderLoadError('記事の読み込みエラーが発生しました。');
+            }
+        }
+
+        /**
+         * ナビゲーションバーにカテゴリリンクを動的に挿入します。
+         */
+        function renderCategoryNav() {
+            const navList = document.getElementById('nav-list');
+            if (!navList) return;
+            
+            // トップ一覧以外の既存のリンクを削除
+            let existingTopLink = navList.querySelector('li a[href="#main-content"]')?.closest('li');
+            navList.innerHTML = '';
+            if (existingTopLink) {
+                 navList.appendChild(existingTopLink);
+            }
+            
+            // 新しいカテゴリリンクを追加
+            ALLOWED_CATEGORIES.forEach(category => {
+                const li = document.createElement('li');
+                li.innerHTML = `<a href="#category-${category}" class="text-white hover:text-red-400 px-3 py-2 rounded-md text-sm font-medium transition duration-150">${category}</a>`;
+                navList.appendChild(li);
+            });
+            
+            // 読者投稿リンクを追加
+            const contactLi = document.createElement('li');
+            contactLi.innerHTML = `<a href="#contact" class="text-white hover:text-red-400 px-3 py-2 rounded-md text-sm font-medium transition duration-150">読者投稿</a>`;
+            navList.appendChild(contactLi);
+        }
+
+        /**
+         * Firestoreから記事をリアルタイムで取得し、画面にレンダリングします。
+         * 記事を読み込んだ後、各カテゴリで6件を超えた古い記事を自動的に削除します。
+         */
+        function loadArticles() {
+            const articlesRef = collection(db, `artifacts/${appId}/public/data/articles`);
+            // タイムスタンプの降順でクエリ
+            const q = query(articlesRef, orderBy("timestamp", "desc"));
+
+            onSnapshot(q, async (snapshot) => {
+                allArticles = [];
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    let content = data.content;
+                    try {
+                        if (typeof content === 'string' && content.startsWith('[')) {
+                            content = JSON.parse(content);
+                        }
+                    } catch (e) {
+                        // ignore
+                    }
+                    allArticles.push({ id: doc.id, ...data, content: content });
+                });
+
+                // --- カテゴリごとの記事数制限チェックと削除ロジック ---
+                const articlesByCategory = allArticles.reduce((acc, article) => {
+                    // 許可されたカテゴリ以外は 'その他' に分類
+                    const category = ALLOWED_CATEGORIES.includes(article.category) ? article.category : 'その他';
+                    if (!acc[category]) {
+                        acc[category] = [];
+                    }
+                    acc[category].push(article);
+                    return acc;
+                }, {});
+
+                let deletedCount = 0;
+                
+                // 削除対象のドキュメントIDを収集
+                const documentsToDelete = [];
+
+                // 各カテゴリに対して削除処理の対象をリストアップ
+                for (const category in articlesByCategory) {
+                    const articlesInCat = articlesByCategory[category];
+                    
+                    if (articlesInCat.length > MAX_ARTICLES_PER_CATEGORY) {
+                        // 記事は既にタイムスタンプ降順(新しい順)でソートされている
+                        // 6件目（インデックス5）以降が削除対象
+                        const articlesToDelete = articlesInCat.slice(MAX_ARTICLES_PER_CATEGORY);
+
+                        articlesToDelete.forEach(article => {
+                             documentsToDelete.push(article.id);
+                        });
+                    }
+                }
+                
+                // 削除対象がある場合のみ削除を実行
+                for (const docId of documentsToDelete) {
+                     try {
+                         // onSnapshot内の非同期処理（deleteDoc）は、次のonSnapshotコールを待たずに実行される
+                         const articleDocRef = doc(db, `artifacts/${appId}/public/data/articles`, docId);
+                         await deleteDoc(articleDocRef);
+                         deletedCount++;
+                     } catch (error) {
+                         console.error(`記事ID ${docId}の自動削除エラー:`, error);
+                     }
+                }
+
+                if (deletedCount > 0) {
+                     console.log(`合計 ${deletedCount} 件の記事が自動削除されました。リストを更新します。`);
+                }
+
+                // 記事のレンダリング (削除後の最新データを反映)
+                renderArticles(allArticles);
+
+            }, (error) => {
+                console.error("記事の取得エラー:", error);
+                showMessage('記事の取得中にエラーが発生しました。', 'error');
+                renderLoadError('記事の読み込みエラーが発生しました。');
+            });
+        }
+
+        /**
+         * 記事データに基づいてカテゴリ別リストのHTMLを動的に生成し、画面を更新します。
+         */
+        function renderArticles(articles) {
+            const categorizedContainer = document.getElementById('categorized-news-container');
+            const loadingIndicator = document.getElementById('loading-initial');
+
+            // 6件に制限したデータを準備
+            const articlesByCategory = articles.reduce((acc, article) => {
+                const category = ALLOWED_CATEGORIES.includes(article.category) ? article.category : 'その他';
+                if (!acc[category]) {
+                    acc[category] = [];
+                }
+                // 表示側でも制限をかける
+                if (acc[category].length < MAX_ARTICLES_PER_CATEGORY) {
+                     acc[category].push(article);
+                }
+                return acc;
+            }, {});
+
+
+            categorizedContainer.innerHTML = '';
+            loadingIndicator.classList.add('hidden');
+
+            if (articles.length === 0) {
+                categorizedContainer.innerHTML = '<p class="text-lg text-gray-500 text-center py-12">まだ記事が登録されていません。</p>';
+                return;
+            }
+
+            let categorizedHTML = '';
+
+            // ALLOWED_CATEGORIESの順序でセクションをレンダリング
+            ALLOWED_CATEGORIES.forEach(category => {
+                const articlesInCat = articlesByCategory[category] || [];
+                const categoryClass = getCategoryColor(category);
+
+                categorizedHTML += `
+                    <section id="category-${category}" class="pt-8 mb-10 border-t-8 border-gray-200">
+                        <h2 class="text-4xl font-extrabold mb-6 border-l-8 ${categoryClass.border} pl-4 leading-tight text-gray-900">
+                            ${category} <span class="text-base font-semibold text-gray-500 ml-2">(${articlesInCat.length}件の最新記事)</span>
+                        </h2>
+                        ${articlesInCat.length > 0 ? `
+                            <div class="space-y-4">
+                                ${articlesInCat.map(article => createListArticleHTML(article, categoryClass.text)).join('')}
+                            </div>
+                        ` : `
+                            <div class="bg-white p-6 rounded-lg text-center border border-gray-100">
+                                <p class="text-gray-500">このカテゴリには現在、記事がありません。</p>
+                            </div>
+                        `}
+                    </section>
+                `;
+            });
+
+            // その他の記事（もしあれば）を最後に表示
+            if (articlesByCategory['その他'] && articlesByCategory['その他'].length > 0) {
+                 const otherArticles = articlesByCategory['その他'];
+                 const categoryClass = getCategoryColor('その他');
+
+                 categorizedHTML += `
+                    <section id="category-その他" class="pt-8 mb-10 border-t-8 border-gray-200">
+                        <h2 class="text-4xl font-extrabold mb-6 border-l-8 ${categoryClass.border} pl-4 leading-tight text-gray-900">
+                            その他 <span class="text-base font-semibold text-gray-500 ml-2">(${otherArticles.length}件の最新記事)</span>
+                        </h2>
+                        <div class="space-y-4">
+                            ${otherArticles.map(article => createListArticleHTML(article, categoryClass.text)).join('')}
+                        </div>
+                    </section>
+                `;
+            }
+
+            categorizedContainer.innerHTML = categorizedHTML;
+        }
+
+        /**
+         * カテゴリ別リスト用のHTMLを生成します。
+         */
+        function createListArticleHTML(article, textColorClass) {
+            const date = article.timestamp?.toDate ? article.timestamp.toDate().toLocaleDateString('ja-JP', { year: 'numeric', month: 'numeric', day: 'numeric' }) : '日付不明';
+            const userDisplay = article.userId ? article.userId.substring(0, 10) + '...' : '匿名';
+            
+            return `
+                <div class="article-list-item bg-white p-4 rounded-lg shadow-sm border border-gray-100 transition duration-200 cursor-pointer" onclick="showArticleContent('${article.id}')">
+                    <div class="md:flex justify-between items-start">
+                        <div class="flex-1 min-w-0 pr-4">
+                            <h4 class="text-xl font-semibold text-gray-900 hover:text-red-700 leading-snug">
+                                ${article.title}
+                            </h4>
+                            <p class="text-sm text-gray-600 line-clamp-1 mt-1">
+                                ${article.summary || 'サマリーがありません。'}
+                            </p>
+                        </div>
+                        <div class="md:text-right mt-3 md:mt-0 md:pl-4 flex-shrink-0">
+                            <p class="text-xs font-bold ${textColorClass} whitespace-nowrap mb-1">${article.category || '未分類'}</p>
+                            <p class="text-xs text-gray-400 whitespace-nowrap">投稿者ID: ${userDisplay}</p>
+                            <p class="text-xs text-gray-400 whitespace-nowrap">${date}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+
+        /**
+         * カテゴリ名に基づいて色クラスを取得します。
+         */
+        function getCategoryColor(category) {
+            switch (category) {
+                case '地域社会': return { border: 'border-blue-500', text: 'text-blue-700' };
+                case '経済・ビジネス': return { border: 'border-green-500', text: 'text-green-700' };
+                case 'スポーツ': return { border: 'border-red-500', text: 'text-red-700' };
+                case '文化': return { border: 'border-purple-500', text: 'text-purple-700' };
+                case '社説・主張': return { border: 'border-yellow-600', text: 'text-yellow-800' };
+                default: return { border: 'border-gray-500', text: 'text-gray-700' }; // その他
+            }
+        }
+
+        /**
+         * 記事の詳細内容をモーダルに表示します。
+         */
+        window.showArticleContent = function(articleId) {
+            const article = allArticles.find(a => a.id === articleId);
+            if (!article) {
+                showMessage('記事が見つかりませんでした。', 'error');
+                return;
+            }
+
+            const modal = document.getElementById('article-modal');
+            const articleDisplay = document.getElementById('article-content-display');
+            const modalTitle = document.getElementById('modal-title');
+
+            const date = article.timestamp?.toDate ? article.timestamp.toDate().toLocaleDateString('ja-JP') : '日付不明';
+            const userDisplay = article.userId ? article.userId.substring(0, 10) + '...' : '匿名';
+            // contentが配列の場合は改行を挟んで結合、文字列の場合はそのまま
+            const articleContent = Array.isArray(article.content) ? article.content.join('\n\n') : (article.content || '記事本文がありません。');
+            const categoryClass = getCategoryColor(article.category);
+
+
+            modalTitle.textContent = '記事詳細';
+            articleDisplay.innerHTML = `
+                <div class="h-[70vh] overflow-y-auto pr-4">
+                    <h2 class="text-3xl font-extrabold mb-2 text-gray-900">${article.title}</h2>
+                    <p class="text-sm font-semibold ${categoryClass.text} mb-1">${article.category}</p>
+                    <p class="text-sm text-gray-500 mb-4">公開日: ${date} / 投稿者ID: ${userDisplay}</p>
+                    <p class="text-lg italic text-gray-700 mb-6 border-l-4 border-gray-300 pl-3">${article.summary || 'サマリーなし'}</p>
+                    <div class="prose max-w-none text-gray-800 whitespace-pre-wrap">${articleContent}</div>
+                </div>
+            `;
+            
+            modal.classList.remove('hidden');
+        }
+        
+        /**
+         * 記事詳細モーダルを非表示にします。
+         */
+        window.hideArticleContent = function() {
+            document.getElementById('article-modal').classList.add('hidden');
+        }
+
+        /**
+         * 簡易メッセージボックスを表示します。（alertの代替）
+         */
+        function showMessage(message, type = 'info') {
+            const messageBox = document.getElementById('message-box');
+            messageBox.textContent = message;
+            messageBox.className = `fixed bottom-4 right-4 p-3 rounded-lg shadow-xl z-50 transition-opacity duration-300 ${
+                type === 'success' ? 'bg-green-500 text-white' : 
+                type === 'error' ? 'bg-red-600 text-white' : 
+                'bg-blue-500 text-white'
+            }`;
+            messageBox.classList.remove('opacity-0', 'hidden');
+            messageBox.classList.add('opacity-100');
+
+            setTimeout(() => {
+                messageBox.classList.remove('opacity-100');
+                messageBox.classList.add('opacity-0');
+                setTimeout(() => messageBox.classList.add('hidden'), 300);
+            }, 4000);
+        }
+
+        /**
+         * 記事の読み込み中にエラーが発生した場合の表示を更新します。
+         */
+        function renderLoadError(message) {
+             const container = document.getElementById('categorized-news-container');
+             const loadingIndicator = document.getElementById('loading-initial');
+             loadingIndicator.classList.add('hidden');
+             container.innerHTML = `<p class="text-red-600 text-center py-12">${message}</p>`;
+        }
+        
+        /**
+         * 現在の日付を和暦（年、月、日、曜日）の形式で取得し、指定された要素に挿入します。
+         */
+        function updateDate() {
+            const dateDisplay = document.getElementById('date-display');
+            
+            if (dateDisplay) {
+                const options = { 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric', 
+                    weekday: 'short'
+                };
+                const formattedDate = new Date().toLocaleDateString('ja-JP', options);
+                dateDisplay.textContent = formattedDate;
+            }
+        }
+
+        // ページロード時にFirebaseの初期化と日付の更新を開始
+        window.onload = initFirebase;
+    </script>
+</body>
+</html>
