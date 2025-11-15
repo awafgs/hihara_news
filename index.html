@@ -185,7 +185,7 @@
         // =======================================================================
         
         // 許可されたカテゴリリスト (ナビゲーションと分類に使用)
-        const ALLOWED_CATEGORIES = ["地域社会", "経済・ビジネス", "スポーツ", "政治", "社説・主張"];
+        const ALLOWED_CATEGORIES = ["社会", "経済・ビジネス", "スポーツ", "政治", "社説・主張"];
 
         /**
          * Firebaseの初期化と認証を行います。
@@ -438,7 +438,7 @@
          */
         function getCategoryColor(category) {
             switch (category) {
-                case '地域社会': return { border: 'border-blue-500', text: 'text-blue-700' };
+                case '社会': return { border: 'border-blue-500', text: 'text-blue-700' };
                 case '経済・ビジネス': return { border: 'border-green-500', text: 'text-green-700' };
                 case 'スポーツ': return { border: 'border-red-500', text: 'text-red-700' };
                 case '政治': return { border: 'border-purple-500', text: 'text-purple-700' };
