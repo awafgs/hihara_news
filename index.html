@@ -83,8 +83,8 @@
                 <section id="categorized-news-container" class="space-y-12">
                     <h2 class="text-3xl font-bold mb-6 border-b-4 border-gray-400 pb-2">最新記事一覧（カテゴリ分類済み）</h2>
                     <div id="loading-initial" class="text-center py-12">
-                         <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto mb-4"></div>
-                         <p class="text-gray-600">記事データを読み込み中...</p>
+                        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto mb-4"></div>
+                        <p class="text-gray-600">記事データを読み込み中...</p>
                     </div>
                 </section>
                 
@@ -156,7 +156,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, query, orderBy, onSnapshot, setLogLevel, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, query, orderBy, onSnapshot, setLogLevel, doc, updateDoc, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         setLogLevel('debug'); // Firestoreのログレベルを設定
 
@@ -166,7 +166,7 @@
         let auth;
         let userId;
         let allArticles = []; // 全記事を保持するための配列
-        const MAX_ARTICLES_PER_CATEGORY = 6; // カテゴリごとの最大記事数 (自動削除の基準)
+        const MAX_ARTICLES_TO_DISPLAY = 5; // カテゴリごとの最大表示記事数 (5件に修正)
 
         // =======================================================================
         // 【重要】ここにユーザーの実際のFirebase設定情報を直接記述します。
@@ -251,11 +251,11 @@
 
         /**
          * Firestoreから記事をリアルタイムで取得し、画面にレンダリングします。
-         * 記事を読み込んだ後、各カテゴリで6件を超えた古い記事を自動的に削除します。
+         * 記事を読み込んだ後、各カテゴリで5件を超えた古い記事に「hidden: true」フラグを設定します。
          */
         function loadArticles() {
             const articlesRef = collection(db, `artifacts/${appId}/public/data/articles`);
-            // タイムスタンプの降順でクエリ
+            // タイムスタンプの降順で、すべての記事を取得 (非表示フラグのフィルタリングはJS側で行う)
             const q = query(articlesRef, orderBy("timestamp", "desc"));
 
             onSnapshot(q, async (snapshot) => {
@@ -273,7 +273,7 @@
                     allArticles.push({ id: doc.id, ...data, content: content });
                 });
 
-                // --- カテゴリごとの記事数制限チェックと削除ロジック ---
+                // --- カテゴリごとの記事数チェックと非表示フラグ設定ロジック ---
                 const articlesByCategory = allArticles.reduce((acc, article) => {
                     // 許可されたカテゴリ以外は 'その他' に分類
                     const category = ALLOWED_CATEGORIES.includes(article.category) ? article.category : 'その他';
@@ -284,44 +284,55 @@
                     return acc;
                 }, {});
 
-                let deletedCount = 0;
+                const batch = writeBatch(db);
+                let updateCount = 0;
+                let hiddenCount = 0;
                 
-                // 削除対象のドキュメントIDを収集
-                const documentsToDelete = [];
-
-                // 各カテゴリに対して削除処理の対象をリストアップ
                 for (const category in articlesByCategory) {
                     const articlesInCat = articlesByCategory[category];
                     
-                    if (articlesInCat.length > MAX_ARTICLES_PER_CATEGORY) {
-                        // 記事は既にタイムスタンプ降順(新しい順)でソートされている
-                        // 6件目（インデックス5）以降が削除対象
-                        const articlesToDelete = articlesInCat.slice(MAX_ARTICLES_PER_CATEGORY);
+                    // 表示件数内の記事には hidden: false を設定
+                    const articlesToKeep = articlesInCat.slice(0, MAX_ARTICLES_TO_DISPLAY);
+                    // 表示件数を超えた記事には hidden: true を設定
+                    const articlesToHide = articlesInCat.slice(MAX_ARTICLES_TO_DISPLAY);
 
-                        articlesToDelete.forEach(article => {
-                             documentsToDelete.push(article.id);
-                        });
-                    }
+                    // 保持する記事 (最新 N 件) に hidden: false を設定
+                    articlesToKeep.forEach(article => {
+                        // hiddenが未設定またはtrueの場合のみ更新
+                        if (article.hidden !== false) {
+                            const articleDocRef = doc(db, `artifacts/${appId}/public/data/articles`, article.id);
+                            batch.update(articleDocRef, { hidden: false });
+                            updateCount++;
+                        }
+                    });
+
+                    // 非表示にする記事 (N+1 件目以降) に hidden: true を設定
+                    articlesToHide.forEach(article => {
+                        // hiddenがfalseまたは未設定の場合のみ更新
+                        if (article.hidden !== true) {
+                            const articleDocRef = doc(db, `artifacts/${appId}/public/data/articles`, article.id);
+                            batch.update(articleDocRef, { hidden: true });
+                            updateCount++;
+                            hiddenCount++;
+                        }
+                    });
                 }
                 
-                // 削除対象がある場合のみ削除を実行
-                for (const docId of documentsToDelete) {
-                     try {
-                         // onSnapshot内の非同期処理（deleteDoc）は、次のonSnapshotコールを待たずに実行される
-                         const articleDocRef = doc(db, `artifacts/${appId}/public/data/articles`, docId);
-                         await deleteDoc(articleDocRef);
-                         deletedCount++;
-                     } catch (error) {
-                         console.error(`記事ID ${docId}の自動削除エラー:`, error);
-                     }
+                // バッチ処理を実行
+                if (updateCount > 0) {
+                    try {
+                        await batch.commit();
+                        console.log(`合計 ${updateCount} 件の記事に対して更新を実行しました。（${hiddenCount} 件が非表示に設定されました）`);
+                        showMessage(`記事リストを更新しました。${hiddenCount}件の記事を非表示にしました。`, 'info');
+                    } catch (error) {
+                        console.error("非表示フラグのバッチ更新エラー:", error);
+                        showMessage('記事の非表示設定中にエラーが発生しました。', 'error');
+                    }
                 }
 
-                if (deletedCount > 0) {
-                     console.log(`合計 ${deletedCount} 件の記事が自動削除されました。リストを更新します。`);
-                }
-
-                // 記事のレンダリング (削除後の最新データを反映)
-                renderArticles(allArticles);
+                // 記事のレンダリング (非表示フラグを考慮した最新データを反映)
+                const visibleArticles = allArticles.filter(article => article.hidden !== true);
+                renderArticles(visibleArticles);
 
             }, (error) => {
                 console.error("記事の取得エラー:", error);
@@ -337,15 +348,16 @@
             const categorizedContainer = document.getElementById('categorized-news-container');
             const loadingIndicator = document.getElementById('loading-initial');
 
-            // 6件に制限したデータを準備
+            // 表示対象の記事 (hidden: true の記事は既に除外済み) をカテゴリごとに分類
             const articlesByCategory = articles.reduce((acc, article) => {
                 const category = ALLOWED_CATEGORIES.includes(article.category) ? article.category : 'その他';
                 if (!acc[category]) {
                     acc[category] = [];
                 }
-                // 表示側でも制限をかける
-                if (acc[category].length < MAX_ARTICLES_PER_CATEGORY) {
-                     acc[category].push(article);
+                // renderArticlesに渡された記事は既に非表示でないものなので、そのまま表示に使う
+                // ただし、念のため表示件数の上限は再確認する
+                if (acc[category].length < MAX_ARTICLES_TO_DISPLAY) {
+                    acc[category].push(article);
                 }
                 return acc;
             }, {});
@@ -390,15 +402,15 @@
                  const categoryClass = getCategoryColor('その他');
 
                  categorizedHTML += `
-                    <section id="category-その他" class="pt-8 mb-10 border-t-8 border-gray-200">
-                        <h2 class="text-4xl font-extrabold mb-6 border-l-8 ${categoryClass.border} pl-4 leading-tight text-gray-900">
-                            その他 <span class="text-base font-semibold text-gray-500 ml-2">(${otherArticles.length}件の最新記事)</span>
-                        </h2>
-                        <div class="space-y-4">
-                            ${otherArticles.map(article => createListArticleHTML(article, categoryClass.text)).join('')}
-                        </div>
-                    </section>
-                `;
+                     <section id="category-その他" class="pt-8 mb-10 border-t-8 border-gray-200">
+                         <h2 class="text-4xl font-extrabold mb-6 border-l-8 ${categoryClass.border} pl-4 leading-tight text-gray-900">
+                             その他 <span class="text-base font-semibold text-gray-500 ml-2">(${otherArticles.length}件の最新記事)</span>
+                         </h2>
+                         <div class="space-y-4">
+                             ${otherArticles.map(article => createListArticleHTML(article, categoryClass.text)).join('')}
+                         </div>
+                     </section>
+                 `;
             }
 
             categorizedContainer.innerHTML = categorizedHTML;
@@ -451,7 +463,8 @@
          * 記事の詳細内容をモーダルに表示します。
          */
         window.showArticleContent = function(articleId) {
-            const article = allArticles.find(a => a.id === articleId);
+            // allArticlesから取得することで、非表示の記事もモーダル表示できるようにする
+            const article = allArticles.find(a => a.id === articleId); 
             if (!article) {
                 showMessage('記事が見つかりませんでした。', 'error');
                 return;
