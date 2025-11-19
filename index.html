@@ -129,7 +129,7 @@
                         <p class="text-xs font-semibold text-yellow-800 mb-2">【PR】</p>
                         <h4 class="text-lg font-bold text-gray-800">日原特産フルーツのオンライン販売開始！</h4>
                         <p class="text-sm text-gray-600 mt-1">今が旬の「日原みかん」を産地直送でお届けします。</p>
-                        <button onclick="location.href='mikan.html'" class="mt-4 bg-red-600 text-white px-4 py-2 rounded-full text-sm font-semibold hover:bg-red-700 transition duration-150 shadow-md">
+                        <button "location.href='mikan.html'" class="mt-4 bg-red-600 text-white px-4 py-2 rounded-full text-sm font-semibold hover:bg-red-700 transition duration-150 shadow-md">
                             詳細を見る
                         </button>
                     </div>
@@ -172,9 +172,9 @@
         setLogLevel('silent'); 
 
         let app, db, auth;
-        let allArticles = []; // 全記事データ（フィルタリング前）
-        let filteredArticles = []; // 検索結果用
-        const MAX_ARTICLES_TO_DISPLAY = 5; // 通常表示時の制限
+        let allArticles = []; 
+        let filteredArticles = []; 
+        const MAX_ARTICLES_TO_DISPLAY = 5; 
 
         const firebaseConfig = {
             apiKey: "AIzaSyAfMuJXDjc87Q9CwabZNn4sw2fTd3ofHag", 
@@ -199,8 +199,6 @@
                 auth = getAuth(app);
 
                 await signInAnonymously(auth);
-                console.log("Authenticated anonymously");
-
                 loadArticles();
 
             } catch (error) {
@@ -232,31 +230,22 @@
 
             onSnapshot(q, (snapshot) => {
                 const tempArticles = [];
-
                 snapshot.forEach(doc => {
                     try {
                         const data = doc.data();
                         if (data.hidden === true) return;
-
                         let content = data.content;
                         try {
                             if (typeof content === 'string' && content.startsWith('[')) {
                                 content = JSON.parse(content);
                             }
-                        } catch (e) {
-                            console.warn("JSON parse error for article:", doc.id);
-                        }
-                        
+                        } catch (e) {}
                         tempArticles.push({ id: doc.id, ...data, content: content });
-
-                    } catch (err) {
-                        console.error("Error processing doc:", doc.id, err);
-                    }
+                    } catch (err) {}
                 });
 
                 allArticles = tempArticles;
                 
-                // ★検索中であれば検索結果を再適用、そうでなければ通常表示
                 const searchInput = document.getElementById('search-input');
                 if (searchInput && searchInput.value.trim() !== '') {
                     handleSearch();
@@ -265,19 +254,14 @@
                 }
 
             }, (error) => {
-                console.error("Fetch Error:", error);
                 if (allArticles.length === 0) {
                     renderLoadError('データの更新中にエラーが発生しました。');
                 }
             });
         }
 
-// ★検索機能（複数単語対応版）
         window.handleSearch = function() {
-            // 全角スペースを半角に変換し、連続するスペースを1つにまとめてから分割
             const rawQuery = document.getElementById('search-input').value.toLowerCase();
-            
-            // 空白文字（全角・半角）で分割して配列にする
             const keywords = rawQuery.split(/[\s\u3000]+/).filter(k => k.length > 0);
             
             const resultInfo = document.getElementById('search-result-info');
@@ -289,60 +273,44 @@
                 return;
             }
 
-            // 検索ロジック（AND検索: すべてのキーワードが含まれているか確認）
             filteredArticles = allArticles.filter(article => {
                 const title = (article.title || '').toLowerCase();
                 const summary = (article.summary || '').toLowerCase();
-                
                 let contentStr = '';
                 if (Array.isArray(article.content)) {
                     contentStr = article.content.join(' ').toLowerCase();
                 } else if (typeof article.content === 'string') {
                     contentStr = article.content.toLowerCase();
                 }
-
                 const targetText = `${title} ${summary} ${contentStr}`;
-
-                // every() を使って、すべてのキーワードが含まれているかチェック
                 return keywords.every(word => targetText.includes(word));
             });
 
-            // 検索結果UIの表示
             resultInfo.classList.remove('hidden');
-            // 検索ワードをスペース区切りで表示
             queryDisplay.textContent = keywords.join(' ');
             countDisplay.textContent = filteredArticles.length;
-
-            // 検索結果としてレンダリング
             renderArticles(filteredArticles, true);
         }
 
-        // ★検索リセット機能
         window.resetSearch = function() {
             const searchInput = document.getElementById('search-input');
             if(searchInput) searchInput.value = '';
-            
             const resultInfo = document.getElementById('search-result-info');
             if(resultInfo) resultInfo.classList.add('hidden');
-
-            renderArticles(allArticles); // 全記事を再表示
+            renderArticles(allArticles);
         }
 
-        // ★レンダリング関数（isSearchResultフラグを追加）
         function renderArticles(articles, isSearchResult = false) {
             const categorizedContainer = document.getElementById('categorized-news-container');
             const loadingIndicator = document.getElementById('loading-initial');
-            
             if(loadingIndicator) loadingIndicator.classList.add('hidden');
 
             let generatedHTML = '';
 
             if (articles.length === 0) {
-                // 検索結果が0件の場合と、初期記事が0件の場合でメッセージを分ける
                 const msg = isSearchResult ? '該当する記事は見つかりませんでした。' : '現在、表示できる記事がありません。';
                 generatedHTML = `<p class="text-lg text-gray-500 text-center py-12">${msg}</p>`;
             } else if (isSearchResult) {
-                // ★検索結果表示モード（カテゴリ分類せず、フラットに表示）
                 generatedHTML = `
                     <div class="space-y-4">
                          ${articles.map(article => {
@@ -352,11 +320,9 @@
                     </div>
                 `;
             } else {
-                // ★通常モード（カテゴリ分類表示 & 件数制限あり）
                 const articlesByCategory = articles.reduce((acc, article) => {
                     const category = ALLOWED_CATEGORIES.includes(article.category) ? article.category : 'その他';
                     if (!acc[category]) acc[category] = [];
-                    // 通常時は件数制限
                     if (acc[category].length < MAX_ARTICLES_TO_DISPLAY) {
                         acc[category].push(article);
                     }
@@ -385,7 +351,6 @@
                     `;
                 });
                 
-                // その他カテゴリ（省略）
                  if (articlesByCategory['その他'] && articlesByCategory['その他'].length > 0) {
                     const otherArticles = articlesByCategory['その他'];
                     const categoryClass = getCategoryColor('その他');
@@ -399,10 +364,10 @@
                     `;
                 }
             }
-
             categorizedContainer.innerHTML = generatedHTML;
         }
 
+        // ★新着マーク判定とHTML生成の修正
         function createListArticleHTML(article, textColorClass) {
             let dateStr = '日付不明';
             try {
@@ -411,7 +376,24 @@
                 }
             } catch(e) { console.warn(e); }
 
-            const userDisplay = article.userId ? article.userId.substring(0, 10) + '...' : '匿名';
+            // --- NEWマーク判定ロジック ---
+            let newMark = '';
+            const now = new Date();
+            // 24時間前の閾値を計算 (48 * 60 * 60 * 1000 ミリ秒)
+            const newThreshold = new Date(now.getTime() - 86400000); 
+            
+            let articleDate = null;
+            try {
+                // FirestoreのTimestampオブジェクトからDateに変換
+                articleDate = article.timestamp && typeof article.timestamp.toDate === 'function' ? article.timestamp.toDate() : null;
+            } catch(e) {}
+
+            if (articleDate && articleDate > newThreshold) {
+                // 記事の日付が24時間以内であればNEWマークを表示
+                newMark = '<span class="bg-red-600 text-white text-xs font-bold px-2 py-0.5 rounded-full mr-2 inline-block leading-none shadow-sm">NEW</span>';
+            }
+            // ---------------------------
+
             const summary = article.summary || '';
 
             return `
@@ -419,7 +401,7 @@
                     <div class="md:flex justify-between items-start">
                         <div class="flex-1 min-w-0 pr-4">
                             <h4 class="text-xl font-semibold text-gray-900 hover:text-red-700 leading-snug">
-                                ${article.title || '(タイトルなし)'}
+                                ${newMark}${article.title || '(タイトルなし)'}
                             </h4>
                             <p class="text-sm text-gray-600 line-clamp-1 mt-1">
                                 ${summary}
