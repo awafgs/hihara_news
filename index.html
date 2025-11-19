@@ -272,19 +272,24 @@
             });
         }
 
-        // ★検索機能
+// ★検索機能（複数単語対応版）
         window.handleSearch = function() {
-            const query = document.getElementById('search-input').value.trim().toLowerCase();
+            // 全角スペースを半角に変換し、連続するスペースを1つにまとめてから分割
+            const rawQuery = document.getElementById('search-input').value.toLowerCase();
+            
+            // 空白文字（全角・半角）で分割して配列にする
+            const keywords = rawQuery.split(/[\s\u3000]+/).filter(k => k.length > 0);
+            
             const resultInfo = document.getElementById('search-result-info');
             const queryDisplay = document.getElementById('search-query-display');
             const countDisplay = document.getElementById('search-count');
 
-            if (query === '') {
+            if (keywords.length === 0) {
                 resetSearch();
                 return;
             }
 
-            // 検索ロジック（タイトルまたは本文にキーワードが含まれるか）
+            // 検索ロジック（AND検索: すべてのキーワードが含まれているか確認）
             filteredArticles = allArticles.filter(article => {
                 const title = (article.title || '').toLowerCase();
                 const summary = (article.summary || '').toLowerCase();
@@ -296,15 +301,19 @@
                     contentStr = article.content.toLowerCase();
                 }
 
-                return title.includes(query) || summary.includes(query) || contentStr.includes(query);
+                const targetText = `${title} ${summary} ${contentStr}`;
+
+                // every() を使って、すべてのキーワードが含まれているかチェック
+                return keywords.every(word => targetText.includes(word));
             });
 
             // 検索結果UIの表示
             resultInfo.classList.remove('hidden');
-            queryDisplay.textContent = query;
+            // 検索ワードをスペース区切りで表示
+            queryDisplay.textContent = keywords.join(' ');
             countDisplay.textContent = filteredArticles.length;
 
-            // 検索結果としてレンダリング（isSearchResult = true）
+            // 検索結果としてレンダリング
             renderArticles(filteredArticles, true);
         }
 
