@@ -3,212 +3,122 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>日原日報オンライン - 最新ニュース</title>
+    <title>日原日報 - 記事管理（編集・削除）</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Noto+Sans+JP:wght@400;500;700&family=Noto+Serif+JP:wght@700&display=swap" rel="stylesheet">
-
     <style>
-        /* フォント設定 */
         body {
             font-family: 'Inter', 'Noto Sans JP', sans-serif;
             background-color: #f8f9fa;
-            scroll-behavior: smooth;
         }
         h1, h2, h3 {
             font-family: 'Inter', 'Noto Serif JP', serif;
         }
-        .whitespace-pre-wrap {
-            white-space: pre-wrap;
+        /* モーダル表示時のアニメーション */
+        .modal-enter {
+            opacity: 0;
+            transform: scale(0.95);
+            transition: opacity 0.2s, transform 0.2s;
         }
-        /* カテゴリリストのホバーエフェクト */
-        .article-list-item {
-            transition: all 0.2s ease-in-out;
-        }
-        .article-list-item:hover {
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-            transform: translateY(-2px);
-        }
-        /* スクロールバーのカスタマイズ */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #f1f1f1; 
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #888; 
-            border-radius: 4px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #555; 
-        }
-
-        /* --- ニュースティッカー（天気予報）用CSS --- */
-        .ticker-wrap {
-            width: 100%;
-            overflow: hidden;
-            white-space: nowrap;
-            background-color: #f3f4f6; /* gray-100 */
-            border-radius: 9999px;
-            position: relative;
-        }
-        
-        .ticker-content {
-            display: inline-block;
-            /* 都市が増えたので、読む時間を確保するために50sに設定 */
-            animation: ticker-scroll 50s linear infinite; 
-        }
-        
-        /* コンテンツを複製して並べることで、切れ目のないループを実現 */
-        @keyframes ticker-scroll {
-            0% { transform: translateX(0); }
-            100% { transform: translateX(-50%); } /* 2セットあるうちの半分（1セット分）動いたら0に戻る */
-        }
-        
-        .weather-item {
-            display: inline-flex;
-            align-items: center;
-            margin-right: 2rem; /* アイテム間の余白 */
+        .modal-enter-active {
+            opacity: 1;
+            transform: scale(1);
         }
     </style>
 </head>
-<body class="text-gray-900 antialiased">
+<body class="min-h-screen text-gray-900">
 
-    <header class="bg-white py-6 border-b-4 border-red-600 shadow-lg">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex flex-col md:flex-row justify-between items-start md:items-center">
-                <h1 class="text-4xl md:text-6xl font-extrabold text-gray-900 tracking-tight pb-2 leading-none">
-                    日原日報オンライン
-                </h1>
-                
-                <div class="mt-4 md:mt-0 w-full md:w-auto flex items-center">
-                    <div class="relative w-full md:w-64">
-                        <input type="text" id="search-input" placeholder="キーワード検索..." 
-                            class="w-full pl-10 pr-4 py-2 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent shadow-sm transition-all"
-                            onkeyup="handleSearch()">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                            </svg>
-                        </div>
-                    </div>
-                </div>
-            </div>
+    <div id="message-box" class="fixed top-0 left-1/2 transform -translate-x-1/2 mt-4 p-4 rounded-lg shadow-xl text-white font-bold transition duration-300 opacity-0 hidden z-50">
+        <span id="message-content"></span>
+    </div>
 
-            <div class="flex flex-col md:flex-row justify-between items-center mt-1 border-t pt-2 border-gray-200 gap-4">
-                <p class="header-info text-sm text-gray-600 font-medium whitespace-nowrap hidden md:block">公正な情報を読者に届け、地域の発展と情報の伝達、保管に尽くす。</p>
-                
-                <div class="flex items-center w-full md:w-auto overflow-hidden space-x-3">
-                    <div id="date-display" class="text-sm font-semibold text-gray-700 whitespace-nowrap flex-shrink-0 border-r border-gray-300 pr-3"></div>
-                    
-                    <div class="ticker-wrap py-1 px-2 shadow-inner">
-                        <div id="weather-ticker-content" class="ticker-content text-sm font-medium text-gray-700">
-                            </div>
-                    </div>
-                </div>
-            </div>
+    <header class="bg-gray-900 text-white shadow-md sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+            <h1 class="text-2xl font-bold">記事管理ツール（編集・削除）</h1>
+            <a href="index.html" class="text-sm hover:text-red-400 transition">閲覧サイトへ戻る</a>
         </div>
     </header>
 
-    <nav class="bg-gray-800 shadow-xl sticky top-0 z-10">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <ul id="nav-list" class="flex space-x-4 md:space-x-8 overflow-x-auto py-2">
-                </ul>
-        </div>
-    </nav>
-
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10" id="main-content">
-        
-        <div id="search-result-info" class="hidden mb-6 pb-4 border-b border-gray-300">
-            <h2 class="text-2xl font-bold text-gray-800">
-                検索結果: <span id="search-query-display" class="text-red-600"></span>
-                <span class="text-lg font-normal text-gray-500 ml-2">（<span id="search-count">0</span>件）</span>
-            </h2>
-            <button onclick="resetSearch()" class="mt-2 text-sm text-blue-600 hover:underline">検索をリセットして一覧に戻る</button>
+    <div class="max-w-7xl mx-auto px-4 py-8">
+        <div id="loading-initial" class="text-center py-12">
+            <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-red-500 mx-auto mb-4"></div>
+            <p class="text-gray-600">記事データを取得中...</p>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
-            
-            <main class="lg:col-span-3 space-y-12">
-                
-                <section id="categorized-news-container" class="space-y-12">
-                    <h2 class="text-3xl font-bold mb-6 border-b-4 border-gray-400 pb-2">最新記事一覧</h2>
-                    <div id="loading-initial" class="text-center py-12">
-                        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto mb-4"></div>
-                        <p class="text-gray-600">記事データを読み込み中...</p>
-                    </div>
-                </section>
-                
-            </main>
-            
-            <aside class="lg:col-span-1">
-                <div class="sticky top-20 space-y-8">
-                    
-                    <div class="bg-white p-6 rounded-lg shadow-xl border-t-4 border-gray-400">
-                        <h3 class="text-xl font-bold mb-4 pb-2 border-b">特集</h3>
-                        <p class="text-sm text-gray-700 italic">
-                            「地域の声」を未来へつなぐ。
-                        </p>
-                        <ul class="mt-4 space-y-2">
-                            <li class="border-b pb-2"><a href="#" class="text-sm hover:text-red-600">・フェイクニュースにどう立ち向かう</a></li>
-                            <li class="border-b pb-2"><a href="#" class="text-sm hover:text-red-600">・三梨記者の現場報告</a></li>
-                            <li><a href="#" class="text-sm hover:text-red-600">・地域発：わが町の声</a></li>
-                        </ul>
-                    </div>
-
-                    <div class="bg-yellow-50 p-6 rounded-lg border border-yellow-200 shadow-md text-center">
-                        <p class="text-xs font-semibold text-yellow-800 mb-2">【PR】</p>
-                        <h4 class="text-lg font-bold text-gray-800">日原特産フルーツのオンライン販売開始！</h4>
-                        <p class="text-sm text-gray-600 mt-1">今が旬の「日原みかん」を産地直送でお届けします。</p>
-                        <button onclick="location.href='mikan.html'" class="mt-4 bg-red-600 text-white px-4 py-2 rounded-full text-sm font-semibold hover:bg-red-700 transition duration-150 shadow-md">
-                            詳細を見る
-                        </button>
-                    </div>
-
-                </div>
-            </aside>
-            
-        </div>
+        <div id="categorized-container" class="space-y-12"></div>
     </div>
-    
-    <div id="article-modal" class="fixed inset-0 bg-gray-900 bg-opacity-75 z-50 hidden transition-opacity duration-300 overflow-y-auto">
-        <div class="flex items-center justify-center min-h-screen p-4">
-            <div class="bg-white w-full max-w-2xl mx-auto rounded-xl shadow-2xl p-6 md:p-8 transform transition-all duration-300">
-                <div class="flex justify-between items-center border-b pb-3 mb-4">
-                    <h2 id="modal-title" class="text-2xl font-bold text-gray-800">記事詳細</h2>
-                    <button onclick="hideArticleContent()" class="text-gray-400 hover:text-gray-600 text-3xl leading-none">&times;</button>
-                </div>
-                
-                <div id="article-content-display">
-                </div>
+
+    <div id="article-modal" class="hidden fixed inset-0 z-40 bg-black bg-opacity-70 flex justify-center items-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col modal-enter-active">
+            <div class="p-4 border-b flex justify-between items-center">
+                <h3 class="font-bold text-lg">記事詳細</h3>
+                <button onclick="hideArticleModal()" class="text-2xl text-gray-500 hover:text-gray-800">&times;</button>
+            </div>
+            <div id="modal-content" class="p-8 overflow-y-auto flex-grow"></div>
+            <div class="p-4 border-t bg-gray-50 flex justify-end gap-4">
+                <button id="edit-trigger-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded shadow transition">
+                    編集する
+                </button>
+                <button id="delete-trigger-btn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded shadow transition">
+                    削除する
+                </button>
             </div>
         </div>
     </div>
 
-    <div id="message-box" class="fixed bottom-4 right-4 p-3 rounded-lg shadow-xl z-50 opacity-0 hidden transition-opacity duration-300" role="alert"></div>
-
-    <footer class="bg-gray-800 text-white py-8 border-t-4 border-red-600 mt-10">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <p class="text-sm font-light mb-2">© 2025 株式会社日原日報</p>
-            <p class="text-xs font-extralight text-gray-400">日原県日原市</p>
-            <p class="text-xs font-extralight text-gray-400">このサイトに出てくる地名・社名などはすべてフィクションです。</p>
+    <div id="edit-modal" class="hidden fixed inset-0 z-50 bg-black bg-opacity-70 flex justify-center items-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto modal-enter-active relative">
+            <div class="p-6">
+                <h3 class="text-2xl font-bold mb-6 text-blue-700 border-b pb-2">記事の編集</h3>
+                <button onclick="hideEditModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-3xl">&times;</button>
+                
+                <form id="edit-form" class="space-y-5">
+                    <input type="hidden" id="edit-id">
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1">タイトル</label>
+                        <input type="text" id="edit-title" class="w-full border-gray-300 rounded-md shadow-sm p-3 border focus:ring-blue-500 focus:border-blue-500" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1">サマリー (一覧用)</label>
+                        <textarea id="edit-summary" rows="2" class="w-full border-gray-300 rounded-md shadow-sm p-3 border focus:ring-blue-500 focus:border-blue-500"></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1">カテゴリ</label>
+                        <select id="edit-category" class="w-full border-gray-300 rounded-md shadow-sm p-3 border bg-white focus:ring-blue-500 focus:border-blue-500"></select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1">本文 (改行はそのまま反映されます)</label>
+                        <textarea id="edit-content" rows="12" class="w-full border-gray-300 rounded-md shadow-sm p-3 border focus:ring-blue-500 focus:border-blue-500" required></textarea>
+                    </div>
+                    <div class="flex gap-4 pt-4">
+                        <button type="button" onclick="hideEditModal()" class="flex-1 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">キャンセル</button>
+                        <button type="button" onclick="saveEdit()" class="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg shadow-lg">変更を保存</button>
+                    </div>
+                </form>
+            </div>
         </div>
-    </footer>
+    </div>
 
-<script type="module">
+    <div id="password-modal" class="hidden fixed inset-0 z-[60] bg-black bg-opacity-80 flex justify-center items-center p-4">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-sm p-6 modal-enter-active">
+            <h3 id="password-modal-title" class="text-xl font-bold text-gray-800 mb-2">管理者認証</h3>
+            <p id="password-modal-desc" class="text-sm text-gray-600 mb-4">操作を続けるにはパスワードを入力してください。</p>
+            
+            <input type="password" id="password-input" placeholder="パスワード" class="w-full p-3 border rounded mb-4 focus:ring-2 focus:ring-gray-500" onkeydown="if(event.key === 'Enter') confirmPasswordAction()">
+            
+            <div class="flex gap-3">
+                <button onclick="hidePasswordModal()" class="flex-1 py-2 border rounded text-gray-600 hover:bg-gray-100">中止</button>
+                <button onclick="confirmPasswordAction()" class="flex-1 py-2 bg-gray-800 text-white rounded hover:bg-gray-700 font-bold">認証</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getFirestore, collection, query, orderBy, onSnapshot, deleteDoc, updateDoc, doc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, query, orderBy, onSnapshot, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        setLogLevel('silent'); 
-
-        let app, db, auth;
-        let allArticles = []; 
-        let filteredArticles = []; 
-        const MAX_ARTICLES_TO_DISPLAY = 5; 
 
         const firebaseConfig = {
             apiKey: "AIzaSyAfMuJXDjc87Q9CwabZNn4sw2fTd3ofHag", 
@@ -221,454 +131,247 @@
         };
 
         const appId = firebaseConfig.appId;
-        const ALLOWED_CATEGORIES = ["社会", "経済・ビジネス", "スポーツ", "政治", "社説・主張"];
+        const ADMIN_PASSWORD = 'twitter'; 
+        const ALLOWED_CATEGORIES = ["社会", "経済・ビジネス", "スポーツ", "政治","IT", "社説・主張"];
+        
+        let db, auth;
+        let allArticles = [];
+        
+        // 処理待ちのアクション情報
+        let pendingAction = null; // 'edit' or 'delete'
+        let pendingTargetId = null;
 
-        async function initFirebase() {
-            updateDate();
-            initWeatherTicker(); // 天気ティッカー初期化
-            renderCategoryNav();
-
-            try {
-                app = initializeApp(firebaseConfig);
-                db = getFirestore(app);
-                auth = getAuth(app);
-
-                await signInAnonymously(auth);
-                loadArticles();
-
-            } catch (error) {
-                console.error("Firebase Init Error:", error);
-                renderLoadError('システムの初期化に失敗しました。');
-            }
-        }
-
-        function renderCategoryNav() {
-            const navList = document.getElementById('nav-list');
-            if (!navList) return;
+        async function init() {
+            const app = initializeApp(firebaseConfig);
+            db = getFirestore(app);
+            auth = getAuth(app);
+            await signInAnonymously(auth);
             
-            navList.innerHTML = '';
-
-            // トップリンク
-            const topLi = document.createElement('li');
-            topLi.innerHTML = `<a href="#main-content" onclick="resetSearch()" class="text-white hover:text-red-400 px-3 py-2 rounded-md text-sm font-medium transition duration-150">トップ一覧</a>`;
-            navList.appendChild(topLi);
+            const q = query(collection(db, `artifacts/${appId}/public/data/articles`), orderBy("timestamp", "desc"));
             
-            // カテゴリリンク
-            ALLOWED_CATEGORIES.forEach(category => {
-                const li = document.createElement('li');
-                li.innerHTML = `<a href="#category-${category}" onclick="resetSearch()" class="text-white hover:text-red-400 px-3 py-2 rounded-md text-sm font-medium transition duration-150">${category}</a>`;
-                navList.appendChild(li);
-            });
-        }
-
-        function loadArticles() {
-            const articlesRef = collection(db, `artifacts/${appId}/public/data/articles`);
-            const q = query(articlesRef, orderBy("timestamp", "desc"));
-
             onSnapshot(q, (snapshot) => {
-                const tempArticles = [];
-                snapshot.forEach(doc => {
+                allArticles = snapshot.docs.map(d => {
+                    const data = d.data();
+                    let content = data.content;
                     try {
-                        const data = doc.data();
-                        if (data.hidden === true) return;
-                        let content = data.content;
-                        try {
-                            if (typeof content === 'string' && content.startsWith('[')) {
-                                content = JSON.parse(content);
-                            }
-                        } catch (e) {}
-                        tempArticles.push({ id: doc.id, ...data, content: content });
-                    } catch (err) {}
+                        if (typeof content === 'string' && content.startsWith('[')) content = JSON.parse(content);
+                    } catch(e){}
+
+                    return {
+                        id: d.id, 
+                        ...data, 
+                        content: content,
+                        timestamp: data.timestamp?.toDate() || new Date()
+                    };
                 });
-
-                allArticles = tempArticles;
-                
-                const searchInput = document.getElementById('search-input');
-                if (searchInput && searchInput.value.trim() !== '') {
-                    handleSearch();
-                } else {
-                    renderArticles(allArticles);
-                }
-
-            }, (error) => {
-                if (allArticles.length === 0) {
-                    renderLoadError('データの更新中にエラーが発生しました。');
-                }
+                renderList();
+                document.getElementById('loading-initial').classList.add('hidden');
             });
         }
 
-        // --- 検索機能 ---
-        window.handleSearch = function() {
-            const rawQuery = document.getElementById('search-input').value.toLowerCase();
-            const keywords = rawQuery.split(/[\s\u3000]+/).filter(k => k.length > 0);
-            
-            const resultInfo = document.getElementById('search-result-info');
-            const queryDisplay = document.getElementById('search-query-display');
-            const countDisplay = document.getElementById('search-count');
+        function renderList() {
+            const container = document.getElementById('categorized-container');
+            container.innerHTML = '';
 
-            if (keywords.length === 0) {
-                resetSearch();
-                return;
-            }
+            ALLOWED_CATEGORIES.forEach(cat => {
+                const articles = allArticles.filter(a => a.category === cat);
+                if(articles.length === 0) return;
 
-            filteredArticles = allArticles.filter(article => {
-                const title = (article.title || '').toLowerCase();
-                const summary = (article.summary || '').toLowerCase();
-                let contentStr = '';
-                if (Array.isArray(article.content)) {
-                    contentStr = article.content.join(' ').toLowerCase();
-                } else if (typeof article.content === 'string') {
-                    contentStr = article.content.toLowerCase();
-                }
-                const targetText = `${title} ${summary} ${contentStr}`;
-                return keywords.every(word => targetText.includes(word));
-            });
-
-            resultInfo.classList.remove('hidden');
-            queryDisplay.textContent = keywords.join(' ');
-            countDisplay.textContent = filteredArticles.length;
-            renderArticles(filteredArticles, true);
-        }
-
-        window.resetSearch = function() {
-            const searchInput = document.getElementById('search-input');
-            if(searchInput) searchInput.value = '';
-            const resultInfo = document.getElementById('search-result-info');
-            if(resultInfo) resultInfo.classList.add('hidden');
-            renderArticles(allArticles);
-        }
-
-        // --- 描画関連 ---
-
-        function renderArticles(articles, isSearchResult = false) {
-            const categorizedContainer = document.getElementById('categorized-news-container');
-            const loadingIndicator = document.getElementById('loading-initial');
-            if(loadingIndicator) loadingIndicator.classList.add('hidden');
-
-            let generatedHTML = '';
-
-            if (articles.length === 0) {
-                const msg = isSearchResult ? '該当する記事は見つかりませんでした。' : '現在、表示できる記事がありません。';
-                generatedHTML = `<p class="text-lg text-gray-500 text-center py-12">${msg}</p>`;
-            } else if (isSearchResult) {
-                generatedHTML = `
-                    <div class="space-y-4">
-                         ${articles.map(article => {
-                             const categoryClass = getCategoryColor(article.category);
-                             return createListArticleHTML(article, categoryClass.text);
-                         }).join('')}
-                    </div>
-                `;
-            } else {
-                const articlesByCategory = articles.reduce((acc, article) => {
-                    const category = ALLOWED_CATEGORIES.includes(article.category) ? article.category : 'その他';
-                    if (!acc[category]) acc[category] = [];
-                    if (acc[category].length < MAX_ARTICLES_TO_DISPLAY) {
-                        acc[category].push(article);
-                    }
-                    return acc;
-                }, {});
-
-                ALLOWED_CATEGORIES.forEach(category => {
-                    const articlesInCat = articlesByCategory[category] || [];
-                    const categoryClass = getCategoryColor(category);
-
-                    generatedHTML += `
-                        <section id="category-${category}" class="pt-8 mb-10 border-t-8 border-gray-200">
-                            <h2 class="text-4xl font-extrabold mb-6 border-l-8 ${categoryClass.border} pl-4 leading-tight text-gray-900">
-                                ${category} <span class="text-base font-semibold text-gray-500 ml-2"></span>
-                            </h2>
-                            ${articlesInCat.length > 0 ? `
-                                <div class="space-y-4">
-                                    ${articlesInCat.map(article => createListArticleHTML(article, categoryClass.text)).join('')}
-                                </div>
-                            ` : `
-                                <div class="bg-white p-6 rounded-lg text-center border border-gray-100">
-                                    <p class="text-gray-500">現在、記事はありません。</p>
-                                </div>
-                            `}
-                        </section>
+                const section = document.createElement('section');
+                section.className = 'border-t-4 border-gray-300 pt-4';
+                
+                let html = `<h2 class="text-2xl font-bold mb-4 text-gray-800">${cat} <span class="text-sm font-normal text-gray-500">(${articles.length})</span></h2>`;
+                html += `<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">`;
+                
+                articles.forEach(article => {
+                    html += `
+                        <div onclick="openArticleModal('${article.id}')" class="bg-white p-5 rounded shadow hover:shadow-lg cursor-pointer transition border hover:border-blue-300 relative group">
+                            <div class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded border">詳細・編集・削除</div>
+                            <h3 class="font-bold text-lg mb-2 line-clamp-2">${article.title}</h3>
+                            <p class="text-sm text-gray-600 mb-2 line-clamp-3">${article.summary || 'サマリーなし'}</p>
+                            <p class="text-xs text-gray-400">${article.timestamp.toLocaleString('ja-JP')}</p>
+                        </div>
                     `;
                 });
                 
-                 if (articlesByCategory['その他'] && articlesByCategory['その他'].length > 0) {
-                    const otherArticles = articlesByCategory['その他'];
-                    const categoryClass = getCategoryColor('その他');
-                    generatedHTML += `
-                        <section id="category-その他" class="pt-8 mb-10 border-t-8 border-gray-200">
-                            <h2 class="text-4xl font-extrabold mb-6 border-l-8 ${categoryClass.border} pl-4 leading-tight text-gray-900">その他</h2>
-                            <div class="space-y-4">
-                                ${otherArticles.map(article => createListArticleHTML(article, categoryClass.text)).join('')}
-                            </div>
-                        </section>
-                    `;
-                }
-            }
-            categorizedContainer.innerHTML = generatedHTML;
+                html += `</div>`;
+                section.innerHTML = html;
+                container.appendChild(section);
+            });
         }
 
-        function createListArticleHTML(article, textColorClass) {
-            let dateStr = '日付不明';
-            try {
-                if (article.timestamp && typeof article.timestamp.toDate === 'function') {
-                    dateStr = article.timestamp.toDate().toLocaleDateString('ja-JP', { year: 'numeric', month: 'numeric', day: 'numeric' });
-                }
-            } catch(e) { console.warn(e); }
+        // 詳細モーダル
+        window.openArticleModal = (id) => {
+            const article = allArticles.find(a => a.id === id);
+            if(!article) return;
 
-            let newMark = '';
-            const now = new Date();
-            const newThreshold = new Date(now.getTime() - 86400000); 
+            const contentStr = Array.isArray(article.content) ? article.content.join('\n\n') : article.content;
             
-            let articleDate = null;
-            try {
-                articleDate = article.timestamp && typeof article.timestamp.toDate === 'function' ? article.timestamp.toDate() : null;
-            } catch(e) {}
-
-            if (articleDate && articleDate > newThreshold) {
-                newMark = '<span class="bg-red-600 text-white text-xs font-bold px-2 py-0.5 rounded-full mr-2 inline-block leading-none shadow-sm">NEW</span>';
-            }
-
-            const summary = article.summary || '';
-            
-            return `
-                <div class="article-list-item bg-white p-4 rounded-lg shadow-sm border border-gray-100 transition duration-200 cursor-pointer relative group" onclick="showArticleContent('${article.id}')">
-                    
-                    <div class="md:flex justify-between items-start">
-                        <div class="flex-1 min-w-0 pr-4">
-                            <h4 class="text-xl font-semibold text-gray-900 hover:text-red-700 leading-snug">
-                                ${newMark}${article.title || '(タイトルなし)'}
-                            </h4>
-                            <p class="text-sm text-gray-600 line-clamp-1 mt-1">
-                                ${summary}
-                            </p>
-                        </div>
-                        <div class="md:text-right mt-3 md:mt-0 md:pl-4 flex-shrink-0">
-                            <p class="text-xs font-bold ${textColorClass} whitespace-nowrap mb-1">${article.category || '未分類'}</p>
-                            <p class="text-xs text-gray-400 whitespace-nowrap">${dateStr}</p>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
-
-        function getCategoryColor(category) {
-            switch (category) {
-                case '社会': return { border: 'border-blue-500', text: 'text-blue-700' };
-                case '経済・ビジネス': return { border: 'border-green-500', text: 'text-green-700' };
-                case 'スポーツ': return { border: 'border-red-500', text: 'text-red-700' };
-                case '政治': return { border: 'border-purple-500', text: 'text-purple-700' };
-                case '社説・主張': return { border: 'border-yellow-600', text: 'text-yellow-800' };
-                default: return { border: 'border-gray-500', text: 'text-gray-700' };
-            }
-        }
-
-        window.showArticleContent = function(articleId) {
-            const article = allArticles.find(a => a.id === articleId); 
-            if (!article) {
-                showMessage('記事が見つかりませんでした。', 'error');
-                return;
-            }
-
-            const modal = document.getElementById('article-modal');
-            const articleDisplay = document.getElementById('article-content-display');
-            const modalTitle = document.getElementById('modal-title');
-
-            let dateStr = '日付不明';
-            if (article.timestamp && typeof article.timestamp.toDate === 'function') {
-                dateStr = article.timestamp.toDate().toLocaleDateString('ja-JP');
-            }
-            
-            let articleContent = '本文なし';
-            if (Array.isArray(article.content)) {
-                articleContent = article.content.join('\n\n');
-            } else if (article.content) {
-                articleContent = article.content;
-            }
-            
-            const categoryClass = getCategoryColor(article.category);
-
-            modalTitle.textContent = '記事詳細';
-            articleDisplay.innerHTML = `
-                <div class="h-[70vh] overflow-y-auto pr-4 relative">
-                    <div class="flex justify-between items-start mb-4">
-                        <div class="flex-1">
-                            <h2 class="text-3xl font-extrabold mb-2 text-gray-900 leading-tight">${article.title || '(タイトルなし)'}</h2>
-                            <p class="text-sm font-semibold ${categoryClass.text} mb-1">${article.category || '未分類'}</p>
-                            <p class="text-sm text-gray-500">公開日: ${dateStr}</p>
-                        </div>
-                    </div>
-                    
-                    <p class="text-lg italic text-gray-700 mb-6 border-l-4 border-gray-300 pl-3 bg-gray-50 py-2 rounded-r">${article.summary || ''}</p>
-                    <div class="prose max-w-none text-gray-800 whitespace-pre-wrap text-lg leading-relaxed font-serif">${articleContent}</div>
-                    
-                    <div class="mt-10 border-t pt-6 text-center">
-                         <button onclick="hideArticleContent()" class="bg-gray-800 text-white px-6 py-3 rounded-full hover:bg-gray-700 transition">記事を閉じる</button>
-                    </div>
-                </div>
+            document.getElementById('modal-content').innerHTML = `
+                <h2 class="text-3xl font-bold mb-2">${article.title}</h2>
+                <div class="text-sm text-gray-500 mb-6">ID: ${article.id} / カテゴリ: ${article.category}</div>
+                <div class="prose max-w-none whitespace-pre-wrap bg-gray-50 p-4 rounded border">${contentStr}</div>
             `;
             
-            modal.classList.remove('hidden');
-        }
-        
-        window.hideArticleContent = function() {
+            // 編集・削除ボタンの設定
+            document.getElementById('edit-trigger-btn').onclick = () => triggerPasswordAuth('edit', id);
+            document.getElementById('delete-trigger-btn').onclick = () => triggerPasswordAuth('delete', id);
+
+            document.getElementById('article-modal').classList.remove('hidden');
+        };
+
+        window.hideArticleModal = () => {
             document.getElementById('article-modal').classList.add('hidden');
+        };
+
+        // パスワード処理
+        function triggerPasswordAuth(action, id) {
+            pendingAction = action;
+            pendingTargetId = id;
+
+            const titleEl = document.getElementById('password-modal-title');
+            const descEl = document.getElementById('password-modal-desc');
+            const btnEl = document.querySelector('#password-modal button:last-child');
+
+            if (action === 'delete') {
+                titleEl.className = "text-xl font-bold text-red-600 mb-2";
+                titleEl.textContent = "警告: 削除確認";
+                descEl.textContent = "この操作は取り消せません。削除するにはパスワードを入力してください。";
+                btnEl.className = "flex-1 py-2 bg-red-600 text-white rounded hover:bg-red-700 font-bold";
+                btnEl.textContent = "削除実行";
+            } else {
+                titleEl.className = "text-xl font-bold text-blue-600 mb-2";
+                titleEl.textContent = "編集モード認証";
+                descEl.textContent = "記事を編集するには管理者パスワードを入力してください。";
+                btnEl.className = "flex-1 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 font-bold";
+                btnEl.textContent = "編集へ進む";
+            }
+
+            document.getElementById('password-input').value = '';
+            document.getElementById('password-modal').classList.remove('hidden');
+            setTimeout(() => document.getElementById('password-input').focus(), 100);
         }
 
-        function showMessage(message, type = 'info') {
-            const messageBox = document.getElementById('message-box');
-            if (!messageBox) return;
+        window.hidePasswordModal = () => {
+            document.getElementById('password-modal').classList.add('hidden');
+            pendingAction = null;
+            pendingTargetId = null;
+        };
 
-            messageBox.textContent = message;
-            messageBox.className = `fixed bottom-4 right-4 p-3 rounded-lg shadow-xl z-50 transition-opacity duration-300 ${
-                type === 'success' ? 'bg-green-500 text-white' : 
-                type === 'error' ? 'bg-red-600 text-white' : 
-                'bg-blue-500 text-white'
-            }`;
-            messageBox.classList.remove('opacity-0', 'hidden');
-            messageBox.classList.add('opacity-100');
+        window.confirmPasswordAction = async () => {
+            const inputPass = document.getElementById('password-input').value;
+            if (inputPass !== ADMIN_PASSWORD) {
+                alert('パスワードが違います');
+                return;
+            }
 
-            setTimeout(() => {
-                messageBox.classList.remove('opacity-100');
-                messageBox.classList.add('opacity-0');
-                setTimeout(() => messageBox.classList.add('hidden'), 300);
-            }, 4000);
-        }
+            // パスワードOKの場合
+            const action = pendingAction;
+            const id = pendingTargetId;
+            
+            // モーダルを閉じる
+            document.getElementById('password-modal').classList.add('hidden');
 
-        function renderLoadError(message) {
-             const container = document.getElementById('categorized-news-container');
-             const loadingIndicator = document.getElementById('loading-initial');
-             if(loadingIndicator) loadingIndicator.classList.add('hidden');
-             if(container) container.innerHTML = `<p class="text-red-600 text-center py-12 bg-red-50 rounded-lg border border-red-200">${message}</p>`;
-        }
-        
-        function updateDate() {
-            const dateDisplay = document.getElementById('date-display');
-            if (dateDisplay) {
-                const options = { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' };
-                dateDisplay.textContent = new Date().toLocaleDateString('ja-JP', options);
+            if (action === 'delete') {
+                await executeDelete(id);
+            } else if (action === 'edit') {
+                openEditForm(id);
+            }
+        };
+
+        // 削除実行
+        async function executeDelete(id) {
+            try {
+                await deleteDoc(doc(db, `artifacts/${appId}/public/data/articles`, id));
+                window.hideArticleModal();
+                showMessage('success', '記事を完全に削除しました');
+            } catch(e) {
+                console.error(e);
+                alert('削除エラー: ' + e.message);
             }
         }
 
-        // --- シード付き乱数生成器 ---
-        // 日付(整数)をタネにして、常に0～1の乱数を返す関数を作成します
-        function createSeededRandom(seed) {
-            return function() {
-                let t = seed += 0x6D2B79F5;
-                t = Math.imul(t ^ t >>> 15, t | 1);
-                t ^= t + Math.imul(t ^ t >>> 7, t | 61);
-                return ((t ^ t >>> 14) >>> 0) / 4294967296;
+        // 編集フォーム関連
+        function openEditForm(id) {
+            const article = allArticles.find(a => a.id === id);
+            if(!article) return;
+
+            // カテゴリ選択肢生成
+            const select = document.getElementById('edit-category');
+            select.innerHTML = ALLOWED_CATEGORIES.map(c => `<option value="${c}">${c}</option>`).join('');
+
+            // フォームに値をセット
+            document.getElementById('edit-id').value = article.id;
+            document.getElementById('edit-title').value = article.title;
+            document.getElementById('edit-summary').value = article.summary || '';
+            document.getElementById('edit-category').value = article.category;
+            
+            // Contentは配列なら結合して表示
+            let contentStr = '';
+            if (Array.isArray(article.content)) {
+                contentStr = article.content.join('\n');
+            } else {
+                contentStr = article.content;
             }
+            document.getElementById('edit-content').value = contentStr;
+
+            // 編集モーダル表示
+            document.getElementById('edit-modal').classList.remove('hidden');
         }
 
-        // --- 天気ティッカー機能（日時連動・固定化） ---
-        function initWeatherTicker() {
-            const tickerContent = document.getElementById('weather-ticker-content');
-            if (!tickerContent) return;
+        window.hideEditModal = () => {
+            document.getElementById('edit-modal').classList.add('hidden');
+        };
 
-            // 1. 現在の「日本時間(JST)の日付」を整数で取得
-            const now = new Date();
-            const jstOffset = 9 * 60; // 日本はUTC+9
-            const jstDate = new Date(now.getTime() + (now.getTimezoneOffset() + jstOffset) * 60000);
-            const seedDateInt = jstDate.getFullYear() * 10000 + (jstDate.getMonth() + 1) * 100 + jstDate.getDate();
+        // 編集保存実行
+        window.saveEdit = async () => {
+            const id = document.getElementById('edit-id').value;
+            const title = document.getElementById('edit-title').value.trim();
+            const summary = document.getElementById('edit-summary').value.trim();
+            const category = document.getElementById('edit-category').value;
+            const contentRaw = document.getElementById('edit-content').value;
 
-            // 2. 乱数生成器を初期化
-            const rng = createSeededRandom(seedDateInt);
+            if (!title || !contentRaw) {
+                alert('タイトルと本文は必須です');
+                return;
+            }
 
-            // 3. 季節判定（JSTの月を使用）
-            const jstMonth = jstDate.getMonth() + 1;
+            // 改行で分割して配列にする
+            const contentArray = contentRaw.split('\n');
 
-            // 4. データ生成
-            const cities = ['日原', '大瓦', '葉間', '英北', '得湧', '神滋', '岩城', '松津', '船黒', '駒谷', '姫園', '八木橋'];
+            try {
+                const docRef = doc(db, `artifacts/${appId}/public/data/articles`, id);
+                await updateDoc(docRef, {
+                    title: title,
+                    summary: summary,
+                    category: category,
+                    content: contentArray,
+                    // timestampは更新せず、updatedAtなどを追加するのも良いが今回はシンプルに
+                    // timestamp: serverTimestamp() // 更新日時を上げたい場合はコメントアウト解除
+                });
+
+                window.hideEditModal();
+                window.hideArticleModal();
+                showMessage('success', '記事の内容を更新しました！');
+            } catch (error) {
+                console.error("Update Error:", error);
+                alert('更新エラー: ' + error.message);
+            }
+        };
+
+        function showMessage(type, msg) {
+            const box = document.getElementById('message-box');
+            const content = box.querySelector('span');
             
-            // rng() を Math.random() の代わりに渡す
-            const weatherDataList = cities.map(city => generateRandomWeatherForCity(city, jstMonth, rng));
+            box.className = `fixed top-4 left-1/2 transform -translate-x-1/2 p-4 rounded shadow-xl text-white font-bold transition duration-300 z-[70] ${type === 'success' ? 'bg-green-600' : 'bg-red-600'}`;
+            content.textContent = msg;
             
-            // 5. HTML生成（シームレスループのために2セット描画）
-            const htmlSet = weatherDataList.map(w => createWeatherItemHTML(w)).join('');
-            tickerContent.innerHTML = htmlSet + htmlSet; 
+            box.classList.remove('hidden', 'opacity-0');
+            setTimeout(() => box.classList.add('opacity-0'), 3000);
+            setTimeout(() => box.classList.add('hidden'), 3300);
         }
 
-        function generateRandomWeatherForCity(cityName, month, rng) {
-    // --- 季節ごとの設定 ---
-    let minTempBase, maxTempBase, allowedWeathers;
-
-    if (month === 12 || month === 1 || month === 2) {
-        // ❄️ 冬 (12, 1, 2月)
-        minTempBase = -2; 
-        maxTempBase = 11; 
-        // 実際の最高気温表示 = (minTempBase+2) ～ (maxTempBase+2) くらいになります
-        allowedWeathers = ['sunny', 'sunny', 'cloudy', 'cloudy', 'snow']; 
-    } 
-    else if (month >= 3 && month <= 5) {
-        // 🌸 春 (3, 4, 5月)
-        minTempBase = 8; 
-        maxTempBase = 23;
-        allowedWeathers = ['sunny', 'sunny', 'cloudy', 'rain']; 
-    } 
-    else if (month >= 6 && month <= 9) {
-        // 🌻 夏 (6, 7, 8, 9月)
-        minTempBase = 23; 
-        maxTempBase = 35;
-        allowedWeathers = ['sunny', 'sunny', 'sunny', 'cloudy', 'rain', 'rain']; 
-    } 
-    else {
-        // 🍂 秋
-        if (month === 11) {
-            // 🧥 11月 (寒め設定)
-            minTempBase = 5; 
-            maxTempBase = 15; 
-        } else {
-            // 🍠 10月 (涼しい設定)
-            minTempBase = 10; 
-            maxTempBase = 22; 
-        }
-        allowedWeathers = ['sunny', 'cloudy', 'rain']; 
-    }
-
-            const weatherIcons = {
-                'sunny': { name: '晴れ', color: 'text-orange-500', iconPath: 'M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z' },
-                'cloudy': { name: '曇り', color: 'text-gray-500', iconPath: 'M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z' },
-                'rain': { name: '雨', color: 'text-blue-500', iconPath: 'M19 14l-7 7m0 0l-7-7m7 7V3' },
-                'snow': { name: '雪', color: 'text-cyan-400', iconPath: 'M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z' }
-            };
-
-            // rng() を使って決定（これで毎回同じ結果になる）
-            const selectedKey = allowedWeathers[Math.floor(rng() * allowedWeathers.length)];
-            const weatherInfo = weatherIcons[selectedKey];
-
-            // 気温決定
-            // ベース温度 + 2度 が計算上の最低ライン
-            const maxTemp = Math.floor(rng() * (maxTempBase - minTempBase) + minTempBase + 2); 
-            const minTemp = maxTemp - Math.floor(rng() * 6 + 4);
-
-            return {
-                city: cityName,
-                name: weatherInfo.name,
-                color: weatherInfo.color,
-                iconPath: weatherInfo.iconPath,
-                max: maxTemp,
-                min: minTemp
-            };
-        }
-
-        function createWeatherItemHTML(data) {
-            return `
-                <div class="weather-item">
-                    <span class="text-xs text-gray-500 mr-1 font-bold">${data.city}</span>
-                    <span class="${data.color} flex items-center mr-2">
-                        <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${data.iconPath}"></path></svg>
-                        ${data.name}
-                    </span>
-                    <span class="">
-                        <span class="text-red-600 font-bold">${data.max}℃</span>
-                        <span class="text-gray-400 mx-0.5">/</span>
-                        <span class="text-blue-600 font-bold">${data.min}℃</span>
-                    </span>
-                </div>
-            `;
-        }
-
-        window.onload = initFirebase;
+        init();
     </script>
 </body>
 </html>
