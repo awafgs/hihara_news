@@ -45,6 +45,34 @@
         ::-webkit-scrollbar-thumb:hover {
             background: #555; 
         }
+
+        /* --- ニュースティッカー（天気予報）用CSS --- */
+        .ticker-wrap {
+            width: 100%;
+            overflow: hidden;
+            white-space: nowrap;
+            background-color: #f3f4f6; /* gray-100 */
+            border-radius: 9999px;
+            position: relative;
+        }
+        
+        .ticker-content {
+            display: inline-block;
+            /* 都市が増えたので、読む時間を確保するために50sに設定 */
+            animation: ticker-scroll 50s linear infinite; 
+        }
+        
+        /* コンテンツを複製して並べることで、切れ目のないループを実現 */
+        @keyframes ticker-scroll {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); } /* 2セットあるうちの半分（1セット分）動いたら0に戻る */
+        }
+        
+        .weather-item {
+            display: inline-flex;
+            align-items: center;
+            margin-right: 2rem; /* アイテム間の余白 */
+        }
     </style>
 </head>
 <body class="text-gray-900 antialiased">
@@ -70,9 +98,16 @@
                 </div>
             </div>
 
-            <div class="flex justify-between items-end mt-1 border-t pt-2 border-gray-200">
-                <p class="header-info text-sm text-gray-600 font-medium">公正な情報を読者に届け、地域の発展と情報の伝達、保管に尽くす。</p>
-                <div id="date-display" class="text-sm font-semibold text-gray-700">
+            <div class="flex flex-col md:flex-row justify-between items-center mt-1 border-t pt-2 border-gray-200 gap-4">
+                <p class="header-info text-sm text-gray-600 font-medium whitespace-nowrap hidden md:block">公正な情報を読者に届け、地域の発展と情報の伝達、保管に尽くす。</p>
+                
+                <div class="flex items-center w-full md:w-auto overflow-hidden space-x-3">
+                    <div id="date-display" class="text-sm font-semibold text-gray-700 whitespace-nowrap flex-shrink-0 border-r border-gray-300 pr-3"></div>
+                    
+                    <div class="ticker-wrap py-1 px-2 shadow-inner">
+                        <div id="weather-ticker-content" class="ticker-content text-sm font-medium text-gray-700">
+                            </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -81,8 +116,7 @@
     <nav class="bg-gray-800 shadow-xl sticky top-0 z-10">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <ul id="nav-list" class="flex space-x-4 md:space-x-8 overflow-x-auto py-2">
-                <li><a href="#main-content" onclick="resetSearch()" class="text-white hover:text-red-400 px-3 py-2 rounded-md text-sm font-medium transition duration-150">トップ一覧</a></li>
-            </ul>
+                </ul>
         </div>
     </nav>
 
@@ -101,7 +135,7 @@
             <main class="lg:col-span-3 space-y-12">
                 
                 <section id="categorized-news-container" class="space-y-12">
-                    <h2 class="text-3xl font-bold mb-6 border-b-4 border-gray-400 pb-2">最新記事一覧（カテゴリ分類済み）</h2>
+                    <h2 class="text-3xl font-bold mb-6 border-b-4 border-gray-400 pb-2">最新記事一覧</h2>
                     <div id="loading-initial" class="text-center py-12">
                         <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto mb-4"></div>
                         <p class="text-gray-600">記事データを読み込み中...</p>
@@ -129,7 +163,7 @@
                         <p class="text-xs font-semibold text-yellow-800 mb-2">【PR】</p>
                         <h4 class="text-lg font-bold text-gray-800">日原特産フルーツのオンライン販売開始！</h4>
                         <p class="text-sm text-gray-600 mt-1">今が旬の「日原みかん」を産地直送でお届けします。</p>
-                        <button "location.href='mikan.html'" class="mt-4 bg-red-600 text-white px-4 py-2 rounded-full text-sm font-semibold hover:bg-red-700 transition duration-150 shadow-md">
+                        <button onclick="location.href='#'" class="mt-4 bg-red-600 text-white px-4 py-2 rounded-full text-sm font-semibold hover:bg-red-700 transition duration-150 shadow-md">
                             詳細を見る
                         </button>
                     </div>
@@ -191,6 +225,7 @@
 
         async function initFirebase() {
             updateDate();
+            initWeatherTicker(); // 天気ティッカー初期化
             renderCategoryNav();
 
             try {
@@ -211,12 +246,14 @@
             const navList = document.getElementById('nav-list');
             if (!navList) return;
             
-            let existingTopLink = navList.querySelector('li a[href="#main-content"]')?.closest('li');
             navList.innerHTML = '';
-            if (existingTopLink) {
-                 navList.appendChild(existingTopLink);
-            }
+
+            // トップリンク
+            const topLi = document.createElement('li');
+            topLi.innerHTML = `<a href="#main-content" onclick="resetSearch()" class="text-white hover:text-red-400 px-3 py-2 rounded-md text-sm font-medium transition duration-150">トップ一覧</a>`;
+            navList.appendChild(topLi);
             
+            // カテゴリリンク
             ALLOWED_CATEGORIES.forEach(category => {
                 const li = document.createElement('li');
                 li.innerHTML = `<a href="#category-${category}" onclick="resetSearch()" class="text-white hover:text-red-400 px-3 py-2 rounded-md text-sm font-medium transition duration-150">${category}</a>`;
@@ -260,6 +297,7 @@
             });
         }
 
+        // --- 検索機能 ---
         window.handleSearch = function() {
             const rawQuery = document.getElementById('search-input').value.toLowerCase();
             const keywords = rawQuery.split(/[\s\u3000]+/).filter(k => k.length > 0);
@@ -299,6 +337,8 @@
             if(resultInfo) resultInfo.classList.add('hidden');
             renderArticles(allArticles);
         }
+
+        // --- 描画関連 ---
 
         function renderArticles(articles, isSearchResult = false) {
             const categorizedContainer = document.getElementById('categorized-news-container');
@@ -367,7 +407,6 @@
             categorizedContainer.innerHTML = generatedHTML;
         }
 
-        // ★新着マーク判定とHTML生成の修正
         function createListArticleHTML(article, textColorClass) {
             let dateStr = '日付不明';
             try {
@@ -376,28 +415,24 @@
                 }
             } catch(e) { console.warn(e); }
 
-            // --- NEWマーク判定ロジック ---
             let newMark = '';
             const now = new Date();
-            // 24時間前の閾値を計算 (48 * 60 * 60 * 1000 ミリ秒)
             const newThreshold = new Date(now.getTime() - 86400000); 
             
             let articleDate = null;
             try {
-                // FirestoreのTimestampオブジェクトからDateに変換
                 articleDate = article.timestamp && typeof article.timestamp.toDate === 'function' ? article.timestamp.toDate() : null;
             } catch(e) {}
 
             if (articleDate && articleDate > newThreshold) {
-                // 記事の日付が24時間以内であればNEWマークを表示
                 newMark = '<span class="bg-red-600 text-white text-xs font-bold px-2 py-0.5 rounded-full mr-2 inline-block leading-none shadow-sm">NEW</span>';
             }
-            // ---------------------------
 
             const summary = article.summary || '';
-
+            
             return `
-                <div class="article-list-item bg-white p-4 rounded-lg shadow-sm border border-gray-100 transition duration-200 cursor-pointer" onclick="showArticleContent('${article.id}')">
+                <div class="article-list-item bg-white p-4 rounded-lg shadow-sm border border-gray-100 transition duration-200 cursor-pointer relative group" onclick="showArticleContent('${article.id}')">
+                    
                     <div class="md:flex justify-between items-start">
                         <div class="flex-1 min-w-0 pr-4">
                             <h4 class="text-xl font-semibold text-gray-900 hover:text-red-700 leading-snug">
@@ -454,12 +489,21 @@
 
             modalTitle.textContent = '記事詳細';
             articleDisplay.innerHTML = `
-                <div class="h-[70vh] overflow-y-auto pr-4">
-                    <h2 class="text-3xl font-extrabold mb-2 text-gray-900">${article.title || '(タイトルなし)'}</h2>
-                    <p class="text-sm font-semibold ${categoryClass.text} mb-1">${article.category || '未分類'}</p>
-                    <p class="text-sm text-gray-500 mb-4">公開日: ${dateStr}</p>
-                    <p class="text-lg italic text-gray-700 mb-6 border-l-4 border-gray-300 pl-3">${article.summary || ''}</p>
-                    <div class="prose max-w-none text-gray-800 whitespace-pre-wrap">${articleContent}</div>
+                <div class="h-[70vh] overflow-y-auto pr-4 relative">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="flex-1">
+                            <h2 class="text-3xl font-extrabold mb-2 text-gray-900 leading-tight">${article.title || '(タイトルなし)'}</h2>
+                            <p class="text-sm font-semibold ${categoryClass.text} mb-1">${article.category || '未分類'}</p>
+                            <p class="text-sm text-gray-500">公開日: ${dateStr}</p>
+                        </div>
+                    </div>
+                    
+                    <p class="text-lg italic text-gray-700 mb-6 border-l-4 border-gray-300 pl-3 bg-gray-50 py-2 rounded-r">${article.summary || ''}</p>
+                    <div class="prose max-w-none text-gray-800 whitespace-pre-wrap text-lg leading-relaxed font-serif">${articleContent}</div>
+                    
+                    <div class="mt-10 border-t pt-6 text-center">
+                         <button onclick="hideArticleContent()" class="bg-gray-800 text-white px-6 py-3 rounded-full hover:bg-gray-700 transition">記事を閉じる</button>
+                    </div>
                 </div>
             `;
             
@@ -503,6 +547,125 @@
                 const options = { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' };
                 dateDisplay.textContent = new Date().toLocaleDateString('ja-JP', options);
             }
+        }
+
+        // --- シード付き乱数生成器 ---
+        // 日付(整数)をタネにして、常に0～1の乱数を返す関数を作成します
+        function createSeededRandom(seed) {
+            return function() {
+                let t = seed += 0x6D2B79F5;
+                t = Math.imul(t ^ t >>> 15, t | 1);
+                t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+                return ((t ^ t >>> 14) >>> 0) / 4294967296;
+            }
+        }
+
+        // --- 天気ティッカー機能（日時連動・固定化） ---
+        function initWeatherTicker() {
+            const tickerContent = document.getElementById('weather-ticker-content');
+            if (!tickerContent) return;
+
+            // 1. 現在の「日本時間(JST)の日付」を整数で取得
+            const now = new Date();
+            const jstOffset = 9 * 60; // 日本はUTC+9
+            const jstDate = new Date(now.getTime() + (now.getTimezoneOffset() + jstOffset) * 60000);
+            const seedDateInt = jstDate.getFullYear() * 10000 + (jstDate.getMonth() + 1) * 100 + jstDate.getDate();
+
+            // 2. 乱数生成器を初期化
+            const rng = createSeededRandom(seedDateInt);
+
+            // 3. 季節判定（JSTの月を使用）
+            const jstMonth = jstDate.getMonth() + 1;
+
+            // 4. データ生成
+            const cities = ['日原', '大瓦', '葉間', '英北', '得湧', '神滋', '岩城', '松津', '船黒', '駒谷', '姫園', '八木橋'];
+            
+            // rng() を Math.random() の代わりに渡す
+            const weatherDataList = cities.map(city => generateRandomWeatherForCity(city, jstMonth, rng));
+            
+            // 5. HTML生成（シームレスループのために2セット描画）
+            const htmlSet = weatherDataList.map(w => createWeatherItemHTML(w)).join('');
+            tickerContent.innerHTML = htmlSet + htmlSet; 
+        }
+
+        function generateRandomWeatherForCity(cityName, month, rng) {
+    // --- 季節ごとの設定 ---
+    let minTempBase, maxTempBase, allowedWeathers;
+
+    if (month === 12 || month === 1 || month === 2) {
+        // ❄️ 冬 (12, 1, 2月)
+        minTempBase = -2; 
+        maxTempBase = 11; 
+        // 実際の最高気温表示 = (minTempBase+2) ～ (maxTempBase+2) くらいになります
+        allowedWeathers = ['sunny', 'sunny', 'cloudy', 'cloudy', 'snow']; 
+    } 
+    else if (month >= 3 && month <= 5) {
+        // 🌸 春 (3, 4, 5月)
+        minTempBase = 8; 
+        maxTempBase = 23;
+        allowedWeathers = ['sunny', 'sunny', 'cloudy', 'rain']; 
+    } 
+    else if (month >= 6 && month <= 9) {
+        // 🌻 夏 (6, 7, 8, 9月)
+        minTempBase = 23; 
+        maxTempBase = 35;
+        allowedWeathers = ['sunny', 'sunny', 'sunny', 'cloudy', 'rain', 'rain']; 
+    } 
+    else {
+        // 🍂 秋
+        if (month === 11) {
+            // 🧥 11月 (寒め設定)
+            minTempBase = 5; 
+            maxTempBase = 15; 
+        } else {
+            // 🍠 10月 (涼しい設定)
+            minTempBase = 10; 
+            maxTempBase = 22; 
+        }
+        allowedWeathers = ['sunny', 'cloudy', 'rain']; 
+    }
+
+            const weatherIcons = {
+                'sunny': { name: '晴れ', color: 'text-orange-500', iconPath: 'M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z' },
+                'cloudy': { name: '曇り', color: 'text-gray-500', iconPath: 'M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z' },
+                'rain': { name: '雨', color: 'text-blue-500', iconPath: 'M19 14l-7 7m0 0l-7-7m7 7V3' },
+                'snow': { name: '雪', color: 'text-cyan-400', iconPath: 'M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z' }
+            };
+
+            // rng() を使って決定（これで毎回同じ結果になる）
+            const selectedKey = allowedWeathers[Math.floor(rng() * allowedWeathers.length)];
+            const weatherInfo = weatherIcons[selectedKey];
+
+            // 気温決定
+            // ベース温度 + 2度 が計算上の最低ライン
+            const maxTemp = Math.floor(rng() * (maxTempBase - minTempBase) + minTempBase + 2); 
+            const minTemp = maxTemp - Math.floor(rng() * 6 + 4);
+
+            return {
+                city: cityName,
+                name: weatherInfo.name,
+                color: weatherInfo.color,
+                iconPath: weatherInfo.iconPath,
+                max: maxTemp,
+                min: minTemp
+            };
+        }
+
+        function createWeatherItemHTML(data) {
+            return `
+                <div class="weather-item">
+                    <span class="text-xs text-gray-500 mr-1 font-bold">${data.city}</span>
+                    <span class="${data.color} flex items-center mr-2">
+                        <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${data.iconPath}"></path></svg>
+                        ${data.name}
+                    </span>
+                    <span class="">
+                        <span class="text-red-600 font-bold">${data.max}℃</span>
+                        <span class="text-gray-400 mx-0.5">/</span>
+                        <span class="text-blue-600 font-bold">${data.min}℃</span>
+                    </span>
+                </div>
+            `;
         }
 
         window.onload = initFirebase;
