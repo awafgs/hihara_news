@@ -73,19 +73,43 @@
             align-items: center;
             margin-right: 2rem; /* アイテム間の余白 */
         }
+        
+        /* 日付入力のカスタマイズ */
+        input[type="date"] {
+            appearance: none;
+            -webkit-appearance: none;
+            min-height: 42px; /* iOS等の押しやすさ考慮 */
+        }
     </style>
 </head>
 <body class="text-gray-900 antialiased">
 
     <header class="bg-white py-6 border-b-4 border-red-600 shadow-lg">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex flex-col md:flex-row justify-between items-start md:items-center">
-                <h1 class="text-4xl md:text-6xl font-extrabold text-gray-900 tracking-tight pb-2 leading-none">
+            <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+                <h1 class="text-4xl md:text-6xl font-extrabold text-gray-900 tracking-tight pb-2 leading-none flex-shrink-0">
                     日原日報オンライン
                 </h1>
                 
-                <div class="mt-4 md:mt-0 w-full md:w-auto flex items-center">
-                    <div class="relative w-full md:w-64">
+                <div class="w-full lg:w-auto flex flex-col xl:flex-row items-center gap-3">
+                    <!-- 期間検索 -->
+                    <div class="flex flex-col sm:flex-row items-center gap-2 w-full lg:w-auto bg-gray-50 p-2 rounded-lg border border-gray-200">
+                        <div class="flex items-center gap-2 w-full sm:w-auto">
+                            <span class="text-xs text-gray-500 font-bold whitespace-nowrap">期間:</span>
+                            <input type="date" id="search-date-start" 
+                                class="w-full sm:w-36 px-2 py-1.5 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm text-gray-700 bg-white"
+                                onchange="handleSearch()" aria-label="検索開始日">
+                        </div>
+                        <span class="text-gray-400 hidden sm:inline">～</span>
+                        <div class="flex items-center gap-2 w-full sm:w-auto">
+                            <input type="date" id="search-date-end" 
+                                class="w-full sm:w-36 px-2 py-1.5 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm text-gray-700 bg-white"
+                                onchange="handleSearch()" aria-label="検索終了日">
+                        </div>
+                    </div>
+
+                    <!-- キーワード検索 -->
+                    <div class="relative w-full xl:w-64">
                         <input type="text" id="search-input" placeholder="キーワード検索..." 
                             class="w-full pl-10 pr-4 py-2 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent shadow-sm transition-all"
                             onkeyup="handleSearch()">
@@ -98,7 +122,7 @@
                 </div>
             </div>
 
-            <div class="flex flex-col md:flex-row justify-between items-center mt-1 border-t pt-2 border-gray-200 gap-4">
+            <div class="flex flex-col md:flex-row justify-between items-center mt-4 border-t pt-2 border-gray-200 gap-4">
                 <p class="header-info text-sm text-gray-600 font-medium whitespace-nowrap hidden md:block">公正な情報を読者に届け、地域の発展と情報の伝達、保管に尽くす。</p>
                 
                 <div class="flex items-center w-full md:w-auto overflow-hidden space-x-3">
@@ -284,7 +308,12 @@
                 allArticles = tempArticles;
                 
                 const searchInput = document.getElementById('search-input');
-                if (searchInput && searchInput.value.trim() !== '') {
+                const searchDateStart = document.getElementById('search-date-start');
+                const searchDateEnd = document.getElementById('search-date-end');
+                
+                if ((searchInput && searchInput.value.trim() !== '') || 
+                    (searchDateStart && searchDateStart.value !== '') ||
+                    (searchDateEnd && searchDateEnd.value !== '')) {
                     handleSearch();
                 } else {
                     renderArticles(allArticles);
@@ -300,18 +329,22 @@
         // --- 検索機能 ---
         window.handleSearch = function() {
             const rawQuery = document.getElementById('search-input').value.toLowerCase();
+            const dateStartQuery = document.getElementById('search-date-start').value; // YYYY-MM-DD
+            const dateEndQuery = document.getElementById('search-date-end').value; // YYYY-MM-DD
+            
             const keywords = rawQuery.split(/[\s\u3000]+/).filter(k => k.length > 0);
             
             const resultInfo = document.getElementById('search-result-info');
             const queryDisplay = document.getElementById('search-query-display');
             const countDisplay = document.getElementById('search-count');
 
-            if (keywords.length === 0) {
+            if (keywords.length === 0 && !dateStartQuery && !dateEndQuery) {
                 resetSearch();
                 return;
             }
 
             filteredArticles = allArticles.filter(article => {
+                // キーワード一致判定
                 const title = (article.title || '').toLowerCase();
                 const summary = (article.summary || '').toLowerCase();
                 let contentStr = '';
@@ -321,18 +354,71 @@
                     contentStr = article.content.toLowerCase();
                 }
                 const targetText = `${title} ${summary} ${contentStr}`;
-                return keywords.every(word => targetText.includes(word));
+                const keywordMatch = keywords.length === 0 || keywords.every(word => targetText.includes(word));
+
+                // 日付範囲判定
+                let dateMatch = true;
+                if (dateStartQuery || dateEndQuery) {
+                    try {
+                        let articleDateStr = null;
+                        if (article.timestamp && typeof article.timestamp.toDate === 'function') {
+                            const articleDate = article.timestamp.toDate();
+                            const y = articleDate.getFullYear();
+                            const m = String(articleDate.getMonth() + 1).padStart(2, '0');
+                            const d = String(articleDate.getDate()).padStart(2, '0');
+                            articleDateStr = `${y}-${m}-${d}`;
+                        }
+                        
+                        if (articleDateStr) {
+                            if (dateStartQuery && articleDateStr < dateStartQuery) {
+                                dateMatch = false;
+                            }
+                            if (dateEndQuery && articleDateStr > dateEndQuery) {
+                                dateMatch = false;
+                            }
+                        } else {
+                            // タイムスタンプがない記事は日付検索時は除外
+                            dateMatch = false;
+                        }
+                    } catch(e) {
+                        dateMatch = false;
+                    }
+                }
+
+                return keywordMatch && dateMatch;
             });
 
             resultInfo.classList.remove('hidden');
-            queryDisplay.textContent = keywords.join(' ');
+            
+            // 検索条件の表示作成
+            let conditions = [];
+            
+            let dateRangeText = "";
+            if (dateStartQuery && dateEndQuery) {
+                dateRangeText = `${dateStartQuery} ～ ${dateEndQuery}`;
+            } else if (dateStartQuery) {
+                dateRangeText = `${dateStartQuery} 以降`;
+            } else if (dateEndQuery) {
+                dateRangeText = `${dateEndQuery} まで`;
+            }
+            if (dateRangeText) conditions.push(`期間: ${dateRangeText}`);
+
+            if (keywords.length > 0) conditions.push(`キーワード: ${keywords.join(' ')}`);
+            
+            queryDisplay.textContent = conditions.join(' / ');
             countDisplay.textContent = filteredArticles.length;
             renderArticles(filteredArticles, true);
         }
 
         window.resetSearch = function() {
             const searchInput = document.getElementById('search-input');
+            const searchDateStart = document.getElementById('search-date-start');
+            const searchDateEnd = document.getElementById('search-date-end');
+            
             if(searchInput) searchInput.value = '';
+            if(searchDateStart) searchDateStart.value = ''; 
+            if(searchDateEnd) searchDateEnd.value = ''; 
+            
             const resultInfo = document.getElementById('search-result-info');
             if(resultInfo) resultInfo.classList.add('hidden');
             renderArticles(allArticles);
@@ -578,7 +664,7 @@
             const jstMonth = jstDate.getMonth() + 1;
 
             // 4. データ生成
-            const cities = ['日原', '大瓦', '葉間', '英北', '得湧', '神滋', '岩城', '松津', '船黒', '駒谷', '姫園', '八木橋', '霧島'];
+            const cities = ['日原', '大瓦', '葉間', '英北', '得湧', '神滋', '岩城', '松津', '船黒', '駒谷', '姫園', '八木橋'];
             
             // rng() を Math.random() の代わりに渡す
             const weatherDataList = cities.map(city => generateRandomWeatherForCity(city, jstMonth, rng));
