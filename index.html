@@ -80,45 +80,107 @@
             -webkit-appearance: none;
             min-height: 42px; /* iOS等の押しやすさ考慮 */
         }
+        /* セレクトボックスのカスタマイズ */
+        select {
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+            background-position: right 0.5rem center;
+            background-repeat: no-repeat;
+            background-size: 1.5em 1.5em;
+            padding-right: 2.5rem;
+        }
+
+        /* フィルターパネルの表示アニメーション */
+        #filter-panel {
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            transform-origin: top right;
+        }
+        #filter-panel.hidden {
+            display: none;
+        }
+        #filter-panel:not(.hidden) {
+            display: block;
+            animation: fadeInScale 0.2s ease-out;
+        }
+        @keyframes fadeInScale {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
     </style>
 </head>
 <body class="text-gray-900 antialiased">
 
-    <header class="bg-white py-6 border-b-4 border-red-600 shadow-lg">
+    <header class="bg-white py-6 border-b-4 border-red-600 shadow-lg relative z-30">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
                 <h1 class="text-4xl md:text-6xl font-extrabold text-gray-900 tracking-tight pb-2 leading-none flex-shrink-0">
                     日原日報オンライン
                 </h1>
                 
-                <div class="w-full lg:w-auto flex flex-col xl:flex-row items-center gap-3">
-                    <!-- 期間検索 -->
-                    <div class="flex flex-col sm:flex-row items-center gap-2 w-full lg:w-auto bg-gray-50 p-2 rounded-lg border border-gray-200">
-                        <div class="flex items-center gap-2 w-full sm:w-auto">
-                            <span class="text-xs text-gray-500 font-bold whitespace-nowrap">期間:</span>
-                            <input type="date" id="search-date-start" 
-                                class="w-full sm:w-36 px-2 py-1.5 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm text-gray-700 bg-white"
-                                onchange="handleSearch()" aria-label="検索開始日">
-                        </div>
-                        <span class="text-gray-400 hidden sm:inline">～</span>
-                        <div class="flex items-center gap-2 w-full sm:w-auto">
-                            <input type="date" id="search-date-end" 
-                                class="w-full sm:w-36 px-2 py-1.5 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm text-gray-700 bg-white"
-                                onchange="handleSearch()" aria-label="検索終了日">
-                        </div>
-                    </div>
-
-                    <!-- キーワード検索 -->
-                    <div class="relative w-full xl:w-64">
-                        <input type="text" id="search-input" placeholder="キーワード検索..." 
-                            class="w-full pl-10 pr-4 py-2 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent shadow-sm transition-all"
-                            onkeyup="handleSearch()">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="w-full lg:w-auto relative">
+                    <!-- 検索バーメイン -->
+                    <div class="flex items-center w-full lg:w-96 bg-gray-100 rounded-full border border-gray-300 focus-within:ring-2 focus-within:ring-red-500 focus-within:border-transparent transition-shadow shadow-sm">
+                        <div class="pl-4 text-gray-400">
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                             </svg>
                         </div>
+                        <input type="text" id="search-input" placeholder="キーワード検索..." 
+                            class="w-full px-3 py-3 bg-transparent border-none focus:outline-none text-gray-700 placeholder-gray-500"
+                            onkeyup="handleSearch()">
+                        
+                        <!-- 絞り込みトグルボタン -->
+                        <button onclick="toggleFilterPanel()" id="filter-toggle-btn" class="pr-2 pl-2 mr-1 py-1.5 text-gray-500 hover:text-red-600 hover:bg-gray-200 rounded-full transition-colors flex items-center gap-1 text-sm font-medium whitespace-nowrap">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
+                            <span class="hidden sm:inline">絞り込み</span>
+                        </button>
                     </div>
+
+                    <!-- 絞り込みパネル（ポップオーバー） -->
+                    <div id="filter-panel" class="hidden absolute right-0 top-full mt-3 w-full sm:w-80 bg-white rounded-xl shadow-2xl border border-gray-200 p-5 z-50">
+                        <div class="flex justify-between items-center mb-4 border-b pb-2">
+                            <h3 class="font-bold text-gray-700">詳細検索条件</h3>
+                            <button onclick="resetSearch()" class="text-xs text-blue-600 hover:underline">条件をリセット</button>
+                        </div>
+                        
+                        <div class="space-y-4">
+                            <!-- ジャンル -->
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 mb-1">ジャンル</label>
+                                <select id="search-category" onchange="handleSearch()" 
+                                    class="w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-red-500 text-sm bg-gray-50">
+                                    <option value="">すべてのジャンル</option>
+                                    <!-- JSで追加 -->
+                                </select>
+                            </div>
+
+                            <!-- 期間 -->
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 mb-1">対象期間</label>
+                                <div class="flex flex-col gap-2">
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-xs text-gray-400 w-8">開始</span>
+                                        <input type="date" id="search-date-start" 
+                                            class="flex-1 px-2 py-1.5 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-red-500 text-sm"
+                                            onchange="handleSearch()">
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-xs text-gray-400 w-8">終了</span>
+                                        <input type="date" id="search-date-end" 
+                                            class="flex-1 px-2 py-1.5 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-red-500 text-sm"
+                                            onchange="handleSearch()">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-4 pt-3 border-t text-right">
+                             <button onclick="toggleFilterPanel()" class="text-sm bg-gray-800 text-white px-4 py-1.5 rounded hover:bg-gray-700 transition">閉じる</button>
+                        </div>
+                    </div>
+                    
+                    <!-- 検索中インジケーター（条件がある時だけ表示） -->
+                    <div id="active-filter-indicator" class="hidden absolute -top-2 -right-2 w-4 h-4 bg-red-500 rounded-full border-2 border-white"></div>
                 </div>
             </div>
 
@@ -137,7 +199,7 @@
         </div>
     </header>
 
-    <nav class="bg-gray-800 shadow-xl sticky top-0 z-10">
+    <nav class="bg-gray-800 shadow-xl sticky top-0 z-20">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <ul id="nav-list" class="flex space-x-4 md:space-x-8 overflow-x-auto py-2">
                 </ul>
@@ -145,6 +207,8 @@
     </nav>
 
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10" id="main-content">
+        
+        <!-- オーバーレイ（フィルターパネルが開いている時だけクリックをブロックするために使用可能だが、今回はパネル外クリック検知で実装） -->
         
         <div id="search-result-info" class="hidden mb-6 pb-4 border-b border-gray-300">
             <h2 class="text-2xl font-bold text-gray-800">
@@ -249,8 +313,9 @@
 
         async function initFirebase() {
             updateDate();
-            initWeatherTicker(); // 天気ティッカー初期化
+            initWeatherTicker(); 
             renderCategoryNav();
+            initSearchCategoryOptions();
 
             try {
                 app = initializeApp(firebaseConfig);
@@ -284,6 +349,18 @@
                 navList.appendChild(li);
             });
         }
+        
+        function initSearchCategoryOptions() {
+            const select = document.getElementById('search-category');
+            if (!select) return;
+            
+            ALLOWED_CATEGORIES.forEach(category => {
+                const option = document.createElement('option');
+                option.value = category;
+                option.textContent = category;
+                select.appendChild(option);
+            });
+        }
 
         function loadArticles() {
             const articlesRef = collection(db, `artifacts/${appId}/public/data/articles`);
@@ -307,13 +384,16 @@
 
                 allArticles = tempArticles;
                 
+                // データロード時に検索条件があれば再検索実行
                 const searchInput = document.getElementById('search-input');
                 const searchDateStart = document.getElementById('search-date-start');
                 const searchDateEnd = document.getElementById('search-date-end');
+                const searchCategory = document.getElementById('search-category');
                 
                 if ((searchInput && searchInput.value.trim() !== '') || 
                     (searchDateStart && searchDateStart.value !== '') ||
-                    (searchDateEnd && searchDateEnd.value !== '')) {
+                    (searchDateEnd && searchDateEnd.value !== '') ||
+                    (searchCategory && searchCategory.value !== '')) {
                     handleSearch();
                 } else {
                     renderArticles(allArticles);
@@ -326,25 +406,70 @@
             });
         }
 
+        // --- フィルターパネル制御 ---
+        window.toggleFilterPanel = function() {
+            const panel = document.getElementById('filter-panel');
+            const btn = document.getElementById('filter-toggle-btn');
+            if(panel.classList.contains('hidden')) {
+                panel.classList.remove('hidden');
+                btn.classList.add('text-red-600', 'bg-gray-200'); // アクティブスタイル
+            } else {
+                panel.classList.add('hidden');
+                btn.classList.remove('text-red-600', 'bg-gray-200');
+            }
+        }
+        
+        // パネル外クリックで閉じる処理
+        document.addEventListener('click', function(event) {
+            const panel = document.getElementById('filter-panel');
+            const btn = document.getElementById('filter-toggle-btn');
+            const searchContainer = document.querySelector('.relative.w-full.lg\\:w-auto'); // 検索コンテナ
+
+            if (!panel || panel.classList.contains('hidden')) return;
+
+            // クリックされた要素がパネル内でもボタン内でもない場合
+            if (!panel.contains(event.target) && !btn.contains(event.target)) {
+                 panel.classList.add('hidden');
+                 btn.classList.remove('text-red-600', 'bg-gray-200');
+            }
+        });
+
         // --- 検索機能 ---
         window.handleSearch = function() {
             const rawQuery = document.getElementById('search-input').value.toLowerCase();
-            const dateStartQuery = document.getElementById('search-date-start').value; // YYYY-MM-DD
-            const dateEndQuery = document.getElementById('search-date-end').value; // YYYY-MM-DD
+            const dateStartQuery = document.getElementById('search-date-start').value; 
+            const dateEndQuery = document.getElementById('search-date-end').value; 
+            const categoryQuery = document.getElementById('search-category').value;
             
             const keywords = rawQuery.split(/[\s\u3000]+/).filter(k => k.length > 0);
             
             const resultInfo = document.getElementById('search-result-info');
             const queryDisplay = document.getElementById('search-query-display');
             const countDisplay = document.getElementById('search-count');
+            const indicator = document.getElementById('active-filter-indicator');
+            const toggleBtn = document.getElementById('filter-toggle-btn');
 
-            if (keywords.length === 0 && !dateStartQuery && !dateEndQuery) {
+            // 検索条件が一つもない場合はリセット
+            if (keywords.length === 0 && !dateStartQuery && !dateEndQuery && !categoryQuery) {
                 resetSearch();
                 return;
             }
+            
+            // フィルター条件がある場合はインジケーター表示、またはボタンの色を変える
+            if (dateStartQuery || dateEndQuery || categoryQuery) {
+                if(indicator) indicator.classList.remove('hidden');
+                toggleBtn.classList.add('text-red-600');
+            } else {
+                if(indicator) indicator.classList.add('hidden');
+                 // パネルが開いてないなら赤字を戻す
+                 const panel = document.getElementById('filter-panel');
+                 if(panel && panel.classList.contains('hidden')) {
+                    toggleBtn.classList.remove('text-red-600');
+                 }
+            }
 
             filteredArticles = allArticles.filter(article => {
-                // キーワード一致判定
+                // 1. キーワード一致判定
                 const title = (article.title || '').toLowerCase();
                 const summary = (article.summary || '').toLowerCase();
                 let contentStr = '';
@@ -356,7 +481,7 @@
                 const targetText = `${title} ${summary} ${contentStr}`;
                 const keywordMatch = keywords.length === 0 || keywords.every(word => targetText.includes(word));
 
-                // 日付範囲判定
+                // 2. 日付範囲判定
                 let dateMatch = true;
                 if (dateStartQuery || dateEndQuery) {
                     try {
@@ -370,22 +495,21 @@
                         }
                         
                         if (articleDateStr) {
-                            if (dateStartQuery && articleDateStr < dateStartQuery) {
-                                dateMatch = false;
-                            }
-                            if (dateEndQuery && articleDateStr > dateEndQuery) {
-                                dateMatch = false;
-                            }
+                            if (dateStartQuery && articleDateStr < dateStartQuery) dateMatch = false;
+                            if (dateEndQuery && articleDateStr > dateEndQuery) dateMatch = false;
                         } else {
-                            // タイムスタンプがない記事は日付検索時は除外
                             dateMatch = false;
                         }
-                    } catch(e) {
-                        dateMatch = false;
-                    }
+                    } catch(e) { dateMatch = false; }
+                }
+                
+                // 3. カテゴリ判定
+                let categoryMatch = true;
+                if (categoryQuery) {
+                    categoryMatch = (article.category === categoryQuery);
                 }
 
-                return keywordMatch && dateMatch;
+                return keywordMatch && dateMatch && categoryMatch;
             });
 
             resultInfo.classList.remove('hidden');
@@ -393,16 +517,14 @@
             // 検索条件の表示作成
             let conditions = [];
             
-            let dateRangeText = "";
-            if (dateStartQuery && dateEndQuery) {
-                dateRangeText = `${dateStartQuery} ～ ${dateEndQuery}`;
-            } else if (dateStartQuery) {
-                dateRangeText = `${dateStartQuery} 以降`;
-            } else if (dateEndQuery) {
-                dateRangeText = `${dateEndQuery} まで`;
-            }
-            if (dateRangeText) conditions.push(`期間: ${dateRangeText}`);
+            if (categoryQuery) conditions.push(`ジャンル: ${categoryQuery}`);
 
+            let dateRangeText = "";
+            if (dateStartQuery && dateEndQuery) dateRangeText = `${dateStartQuery} ～ ${dateEndQuery}`;
+            else if (dateStartQuery) dateRangeText = `${dateStartQuery} 以降`;
+            else if (dateEndQuery) dateRangeText = `${dateEndQuery} まで`;
+            
+            if (dateRangeText) conditions.push(`期間: ${dateRangeText}`);
             if (keywords.length > 0) conditions.push(`キーワード: ${keywords.join(' ')}`);
             
             queryDisplay.textContent = conditions.join(' / ');
@@ -414,10 +536,20 @@
             const searchInput = document.getElementById('search-input');
             const searchDateStart = document.getElementById('search-date-start');
             const searchDateEnd = document.getElementById('search-date-end');
+            const searchCategory = document.getElementById('search-category');
+            const indicator = document.getElementById('active-filter-indicator');
+            const toggleBtn = document.getElementById('filter-toggle-btn');
             
             if(searchInput) searchInput.value = '';
             if(searchDateStart) searchDateStart.value = ''; 
             if(searchDateEnd) searchDateEnd.value = ''; 
+            if(searchCategory) searchCategory.value = ''; 
+            
+            if(indicator) indicator.classList.add('hidden');
+            const panel = document.getElementById('filter-panel');
+            if(panel && panel.classList.contains('hidden')) {
+               toggleBtn.classList.remove('text-red-600');
+            }
             
             const resultInfo = document.getElementById('search-result-info');
             if(resultInfo) resultInfo.classList.add('hidden');
