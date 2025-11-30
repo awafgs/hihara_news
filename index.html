@@ -629,7 +629,15 @@
             let dateStr = '日付不明';
             try {
                 if (article.timestamp && typeof article.timestamp.toDate === 'function') {
-                    dateStr = article.timestamp.toDate().toLocaleDateString('ja-JP', { year: 'numeric', month: 'numeric', day: 'numeric' });
+                    const d = article.timestamp.toDate();
+                    // 年/月/日 時:分 の形式を作成（0埋めも行う）
+                    const year = d.getFullYear();
+                    const month = d.getMonth() + 1;
+                    const day = d.getDate();
+                    const hour = String(d.getHours()).padStart(2, '0');
+                    const min = String(d.getMinutes()).padStart(2, '0');
+                    
+                    dateStr = `${year}/${month}/${day} ${hour}:${min}`;
                 }
             } catch(e) { console.warn(e); }
 
@@ -693,7 +701,14 @@
 
             let dateStr = '日付不明';
             if (article.timestamp && typeof article.timestamp.toDate === 'function') {
-                dateStr = article.timestamp.toDate().toLocaleDateString('ja-JP');
+                const d = article.timestamp.toDate();
+                const year = d.getFullYear();
+                const month = d.getMonth() + 1;
+                const day = d.getDate();
+                const hour = String(d.getHours()).padStart(2, '0');
+                const min = String(d.getMinutes()).padStart(2, '0');
+                
+                dateStr = `${year}年${month}月${day}日 ${hour}:${min}`;
             }
             
             let articleContent = '本文なし';
