@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>日原日報オンライン - 最新ニュース</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -51,36 +52,32 @@
             width: 100%;
             overflow: hidden;
             white-space: nowrap;
-            background-color: #f3f4f6; /* gray-100 */
+            background-color: #f3f4f6;
             border-radius: 9999px;
             position: relative;
         }
         
         .ticker-content {
             display: inline-block;
-            /* 都市が増えたので、読む時間を確保するために50sに設定 */
             animation: ticker-scroll 50s linear infinite; 
         }
         
-        /* コンテンツを複製して並べることで、切れ目のないループを実現 */
         @keyframes ticker-scroll {
             0% { transform: translateX(0); }
-            100% { transform: translateX(-50%); } /* 2セットあるうちの半分（1セット分）動いたら0に戻る */
+            100% { transform: translateX(-50%); } 
         }
         
         .weather-item {
             display: inline-flex;
             align-items: center;
-            margin-right: 2rem; /* アイテム間の余白 */
+            margin-right: 2rem;
         }
         
-        /* 日付入力のカスタマイズ */
         input[type="date"] {
             appearance: none;
             -webkit-appearance: none;
-            min-height: 42px; /* iOS等の押しやすさ考慮 */
+            min-height: 42px;
         }
-        /* セレクトボックスのカスタマイズ */
         select {
             appearance: none;
             background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
@@ -90,7 +87,6 @@
             padding-right: 2.5rem;
         }
 
-        /* フィルターパネルの表示アニメーション */
         #filter-panel {
             transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
             transform-origin: top right;
@@ -106,6 +102,65 @@
             from { opacity: 0; transform: scale(0.95); }
             to { opacity: 1; transform: scale(1); }
         }
+
+        /* --- 記事本文（Markdown）のスタイル --- */
+        .article-body {
+            line-height: 1.8;
+            color: #374151;
+        }
+        .article-body h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #e5e7eb;
+            color: #111827;
+        }
+        .article-body h3 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+            color: #1f2937;
+            border-left: 4px solid #ef4444; /* 赤いアクセント */
+            padding-left: 0.75rem;
+        }
+        .article-body p {
+            margin-bottom: 1.5rem;
+        }
+        .article-body ul {
+            list-style-type: disc;
+            padding-left: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .article-body ol {
+            list-style-type: decimal;
+            padding-left: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .article-body li {
+            margin-bottom: 0.5rem;
+        }
+        .article-body strong {
+            font-weight: 700;
+            color: #111827;
+            background: linear-gradient(transparent 60%, #fecaca 60%); /* マーカー風 */
+        }
+        .article-body blockquote {
+            border-left: 4px solid #d1d5db;
+            padding-left: 1rem;
+            font-style: italic;
+            color: #4b5563;
+            margin-bottom: 1.5rem;
+        }
+        .article-body a {
+            color: #2563eb;
+            text-decoration: underline;
+        }
+        .article-body a:hover {
+            color: #1d4ed8;
+        }
     </style>
 </head>
 <body class="text-gray-900 antialiased">
@@ -118,7 +173,6 @@
                 </h1>
                 
                 <div class="w-full lg:w-auto relative">
-                    <!-- 検索バーメイン -->
                     <div class="flex items-center w-full lg:w-96 bg-gray-100 rounded-full border border-gray-300 focus-within:ring-2 focus-within:ring-red-500 focus-within:border-transparent transition-shadow shadow-sm">
                         <div class="pl-4 text-gray-400">
                             <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -129,14 +183,12 @@
                             class="w-full px-3 py-3 bg-transparent border-none focus:outline-none text-gray-700 placeholder-gray-500"
                             onkeyup="handleSearch()">
                         
-                        <!-- 絞り込みトグルボタン -->
                         <button onclick="toggleFilterPanel()" id="filter-toggle-btn" class="pr-2 pl-2 mr-1 py-1.5 text-gray-500 hover:text-red-600 hover:bg-gray-200 rounded-full transition-colors flex items-center gap-1 text-sm font-medium whitespace-nowrap">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
                             <span class="hidden sm:inline">絞り込み</span>
                         </button>
                     </div>
 
-                    <!-- 絞り込みパネル（ポップオーバー） -->
                     <div id="filter-panel" class="hidden absolute right-0 top-full mt-3 w-full sm:w-80 bg-white rounded-xl shadow-2xl border border-gray-200 p-5 z-50">
                         <div class="flex justify-between items-center mb-4 border-b pb-2">
                             <h3 class="font-bold text-gray-700">詳細検索条件</h3>
@@ -144,17 +196,14 @@
                         </div>
                         
                         <div class="space-y-4">
-                            <!-- ジャンル -->
                             <div>
                                 <label class="block text-xs font-bold text-gray-500 mb-1">ジャンル</label>
                                 <select id="search-category" onchange="handleSearch()" 
                                     class="w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-red-500 text-sm bg-gray-50">
                                     <option value="">すべてのジャンル</option>
-                                    <!-- JSで追加 -->
-                                </select>
+                                    </select>
                             </div>
 
-                            <!-- 期間 -->
                             <div>
                                 <label class="block text-xs font-bold text-gray-500 mb-1">対象期間</label>
                                 <div class="flex flex-col gap-2">
@@ -179,7 +228,6 @@
                         </div>
                     </div>
                     
-                    <!-- 検索中インジケーター（条件がある時だけ表示） -->
                     <div id="active-filter-indicator" class="hidden absolute -top-2 -right-2 w-4 h-4 bg-red-500 rounded-full border-2 border-white"></div>
                 </div>
             </div>
@@ -207,8 +255,6 @@
     </nav>
 
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10" id="main-content">
-        
-        <!-- オーバーレイ（フィルターパネルが開いている時だけクリックをブロックするために使用可能だが、今回はパネル外クリック検知で実装） -->
         
         <div id="search-result-info" class="hidden mb-6 pb-4 border-b border-gray-300">
             <h2 class="text-2xl font-bold text-gray-800">
@@ -309,7 +355,15 @@
         };
 
         const appId = firebaseConfig.appId;
-        const ALLOWED_CATEGORIES = ["社会", "経済・ビジネス", "スポーツ", "政治","IT", "社説・主張"];
+        const ALLOWED_CATEGORIES = ["日原日報からのお知らせ","社会", "経済・ビジネス", "スポーツ", "政治","IT", "社説・主張"];
+
+        // markedの設定（改行を<br>にするなど）
+        if (typeof marked !== 'undefined') {
+            marked.use({
+                breaks: true, // 改行を<br>に変換
+                gfm: true     // GitHub Flavored Markdown有効
+            });
+        }
 
         async function initFirebase() {
             updateDate();
@@ -337,12 +391,10 @@
             
             navList.innerHTML = '';
 
-            // トップリンク
             const topLi = document.createElement('li');
             topLi.innerHTML = `<a href="#main-content" onclick="resetSearch()" class="text-white hover:text-red-400 px-3 py-2 rounded-md text-sm font-medium transition duration-150">トップ一覧</a>`;
             navList.appendChild(topLi);
             
-            // カテゴリリンク
             ALLOWED_CATEGORIES.forEach(category => {
                 const li = document.createElement('li');
                 li.innerHTML = `<a href="#category-${category}" onclick="resetSearch()" class="text-white hover:text-red-400 px-3 py-2 rounded-md text-sm font-medium transition duration-150">${category}</a>`;
@@ -384,7 +436,6 @@
 
                 allArticles = tempArticles;
                 
-                // データロード時に検索条件があれば再検索実行
                 const searchInput = document.getElementById('search-input');
                 const searchDateStart = document.getElementById('search-date-start');
                 const searchDateEnd = document.getElementById('search-date-end');
@@ -406,35 +457,30 @@
             });
         }
 
-        // --- フィルターパネル制御 ---
         window.toggleFilterPanel = function() {
             const panel = document.getElementById('filter-panel');
             const btn = document.getElementById('filter-toggle-btn');
             if(panel.classList.contains('hidden')) {
                 panel.classList.remove('hidden');
-                btn.classList.add('text-red-600', 'bg-gray-200'); // アクティブスタイル
+                btn.classList.add('text-red-600', 'bg-gray-200'); 
             } else {
                 panel.classList.add('hidden');
                 btn.classList.remove('text-red-600', 'bg-gray-200');
             }
         }
         
-        // パネル外クリックで閉じる処理
         document.addEventListener('click', function(event) {
             const panel = document.getElementById('filter-panel');
             const btn = document.getElementById('filter-toggle-btn');
-            const searchContainer = document.querySelector('.relative.w-full.lg\\:w-auto'); // 検索コンテナ
 
             if (!panel || panel.classList.contains('hidden')) return;
 
-            // クリックされた要素がパネル内でもボタン内でもない場合
             if (!panel.contains(event.target) && !btn.contains(event.target)) {
                  panel.classList.add('hidden');
                  btn.classList.remove('text-red-600', 'bg-gray-200');
             }
         });
 
-        // --- 検索機能 ---
         window.handleSearch = function() {
             const rawQuery = document.getElementById('search-input').value.toLowerCase();
             const dateStartQuery = document.getElementById('search-date-start').value; 
@@ -449,19 +495,16 @@
             const indicator = document.getElementById('active-filter-indicator');
             const toggleBtn = document.getElementById('filter-toggle-btn');
 
-            // 検索条件が一つもない場合はリセット
             if (keywords.length === 0 && !dateStartQuery && !dateEndQuery && !categoryQuery) {
                 resetSearch();
                 return;
             }
             
-            // フィルター条件がある場合はインジケーター表示、またはボタンの色を変える
             if (dateStartQuery || dateEndQuery || categoryQuery) {
                 if(indicator) indicator.classList.remove('hidden');
                 toggleBtn.classList.add('text-red-600');
             } else {
                 if(indicator) indicator.classList.add('hidden');
-                 // パネルが開いてないなら赤字を戻す
                  const panel = document.getElementById('filter-panel');
                  if(panel && panel.classList.contains('hidden')) {
                     toggleBtn.classList.remove('text-red-600');
@@ -469,7 +512,6 @@
             }
 
             filteredArticles = allArticles.filter(article => {
-                // 1. キーワード一致判定
                 const title = (article.title || '').toLowerCase();
                 const summary = (article.summary || '').toLowerCase();
                 let contentStr = '';
@@ -481,7 +523,6 @@
                 const targetText = `${title} ${summary} ${contentStr}`;
                 const keywordMatch = keywords.length === 0 || keywords.every(word => targetText.includes(word));
 
-                // 2. 日付範囲判定
                 let dateMatch = true;
                 if (dateStartQuery || dateEndQuery) {
                     try {
@@ -503,7 +544,6 @@
                     } catch(e) { dateMatch = false; }
                 }
                 
-                // 3. カテゴリ判定
                 let categoryMatch = true;
                 if (categoryQuery) {
                     categoryMatch = (article.category === categoryQuery);
@@ -514,7 +554,6 @@
 
             resultInfo.classList.remove('hidden');
             
-            // 検索条件の表示作成
             let conditions = [];
             
             if (categoryQuery) conditions.push(`ジャンル: ${categoryQuery}`);
@@ -555,8 +594,6 @@
             if(resultInfo) resultInfo.classList.add('hidden');
             renderArticles(allArticles);
         }
-
-        // --- 描画関連 ---
 
         function renderArticles(articles, isSearchResult = false) {
             const categorizedContainer = document.getElementById('categorized-news-container');
@@ -630,7 +667,6 @@
             try {
                 if (article.timestamp && typeof article.timestamp.toDate === 'function') {
                     const d = article.timestamp.toDate();
-                    // 年/月/日 時:分 の形式を作成（0埋めも行う）
                     const year = d.getFullYear();
                     const month = d.getMonth() + 1;
                     const day = d.getDate();
@@ -679,6 +715,7 @@
 
         function getCategoryColor(category) {
             switch (category) {
+                case '日原日報からのお知らせ': return { border: 'border-blue-500', text: 'text-blue-700' };
                 case '社会': return { border: 'border-blue-500', text: 'text-blue-700' };
                 case '経済・ビジネス': return { border: 'border-green-500', text: 'text-green-700' };
                 case 'スポーツ': return { border: 'border-red-500', text: 'text-red-700' };
@@ -711,11 +748,25 @@
                 dateStr = `${year}年${month}月${day}日 ${hour}:${min}`;
             }
             
-            let articleContent = '本文なし';
+            // 本文の取得とMarkdown変換
+            let articleHtml = '';
+            let rawContent = '';
+            
+            // 古いデータ形式(配列)と新しいデータ形式(文字列)の両対応
             if (Array.isArray(article.content)) {
-                articleContent = article.content.join('\n\n');
+                rawContent = article.content.join('\n');
             } else if (article.content) {
-                articleContent = article.content;
+                rawContent = article.content;
+            } else {
+                rawContent = '本文なし';
+            }
+
+            // markedでHTMLに変換
+            if (typeof marked !== 'undefined') {
+                articleHtml = marked.parse(rawContent);
+            } else {
+                // フォールバック（改行だけ置換）
+                articleHtml = rawContent.replace(/\n/g, '<br>');
             }
             
             const categoryClass = getCategoryColor(article.category);
@@ -732,7 +783,10 @@
                     </div>
                     
                     <p class="text-lg italic text-gray-700 mb-6 border-l-4 border-gray-300 pl-3 bg-gray-50 py-2 rounded-r">${article.summary || ''}</p>
-                    <div class="prose max-w-none text-gray-800 whitespace-pre-wrap text-lg leading-relaxed font-serif">${articleContent}</div>
+                    
+                    <div class="article-body font-serif text-lg leading-relaxed">
+                        ${articleHtml}
+                    </div>
                     
                     <div class="mt-10 border-t pt-6 text-center">
                          <button onclick="hideArticleContent()" class="bg-gray-800 text-white px-6 py-3 rounded-full hover:bg-gray-700 transition">記事を閉じる</button>
@@ -782,8 +836,6 @@
             }
         }
 
-        // --- シード付き乱数生成器 ---
-        // 日付(整数)をタネにして、常に0～1の乱数を返す関数を作成します
         function createSeededRandom(seed) {
             return function() {
                 let t = seed += 0x6D2B79F5;
@@ -793,70 +845,43 @@
             }
         }
 
-        // --- 天気ティッカー機能（日時連動・固定化） ---
         function initWeatherTicker() {
             const tickerContent = document.getElementById('weather-ticker-content');
             if (!tickerContent) return;
 
-            // 1. 現在の「日本時間(JST)の日付」を整数で取得
             const now = new Date();
-            const jstOffset = 9 * 60; // 日本はUTC+9
+            const jstOffset = 9 * 60; 
             const jstDate = new Date(now.getTime() + (now.getTimezoneOffset() + jstOffset) * 60000);
             const seedDateInt = jstDate.getFullYear() * 10000 + (jstDate.getMonth() + 1) * 100 + jstDate.getDate();
 
-            // 2. 乱数生成器を初期化
             const rng = createSeededRandom(seedDateInt);
-
-            // 3. 季節判定（JSTの月を使用）
             const jstMonth = jstDate.getMonth() + 1;
 
-            // 4. データ生成
             const cities = ['日原', '大瓦', '葉間', '英北', '得湧', '神滋', '岩城', '松津', '船黒', '駒谷', '姫園', '八木橋'];
             
-            // rng() を Math.random() の代わりに渡す
             const weatherDataList = cities.map(city => generateRandomWeatherForCity(city, jstMonth, rng));
             
-            // 5. HTML生成（シームレスループのために2セット描画）
             const htmlSet = weatherDataList.map(w => createWeatherItemHTML(w)).join('');
             tickerContent.innerHTML = htmlSet + htmlSet; 
         }
 
         function generateRandomWeatherForCity(cityName, month, rng) {
-    // --- 季節ごとの設定 ---
-    let minTempBase, maxTempBase, allowedWeathers;
+            let minTempBase, maxTempBase, allowedWeathers;
 
-    if (month === 12 || month === 1 || month === 2) {
-        // ❄️ 冬 (12, 1, 2月)
-        minTempBase = -2; 
-        maxTempBase = 11; 
-        // 実際の最高気温表示 = (minTempBase+2) ～ (maxTempBase+2) くらいになります
-        allowedWeathers = ['sunny', 'sunny', 'cloudy', 'cloudy', 'snow']; 
-    } 
-    else if (month >= 3 && month <= 5) {
-        // 🌸 春 (3, 4, 5月)
-        minTempBase = 8; 
-        maxTempBase = 23;
-        allowedWeathers = ['sunny', 'sunny', 'cloudy', 'rain']; 
-    } 
-    else if (month >= 6 && month <= 9) {
-        // 🌻 夏 (6, 7, 8, 9月)
-        minTempBase = 23; 
-        maxTempBase = 35;
-        allowedWeathers = ['sunny', 'sunny', 'sunny', 'cloudy', 'rain', 'rain']; 
-    } 
-    else {
-        // 🍂 秋
-        if (month === 11) {
-            // 🧥 11月 (寒め設定)
-            minTempBase = 5; 
-            maxTempBase = 15; 
-        } else {
-            // 🍠 10月 (涼しい設定)
-            minTempBase = 10; 
-            maxTempBase = 22; 
-        }
-        allowedWeathers = ['sunny', 'cloudy', 'rain']; 
-    }
+            if (month === 12 || month === 1 || month === 2) {
+                minTempBase = -2; maxTempBase = 11; 
+                allowedWeathers = ['sunny', 'sunny', 'cloudy', 'cloudy', 'snow']; 
+            } else if (month >= 3 && month <= 5) {
+                minTempBase = 8; maxTempBase = 23;
+                allowedWeathers = ['sunny', 'sunny', 'cloudy', 'rain']; 
+            } else if (month >= 6 && month <= 9) {
+                minTempBase = 23; maxTempBase = 35;
+                allowedWeathers = ['sunny', 'sunny', 'sunny', 'cloudy', 'rain', 'rain']; 
+            } else {
+                if (month === 11) { minTempBase = 5; maxTempBase = 15; } 
+                else { minTempBase = 10; maxTempBase = 22; }
+                allowedWeathers = ['sunny', 'cloudy', 'rain']; 
+            }
 
             const weatherIcons = {
                 'sunny': { name: '晴れ', color: 'text-orange-500', iconPath: 'M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z' },
@@ -865,12 +890,9 @@
                 'snow': { name: '雪', color: 'text-cyan-400', iconPath: 'M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z' }
             };
 
-            // rng() を使って決定（これで毎回同じ結果になる）
             const selectedKey = allowedWeathers[Math.floor(rng() * allowedWeathers.length)];
             const weatherInfo = weatherIcons[selectedKey];
 
-            // 気温決定
-            // ベース温度 + 2度 が計算上の最低ライン
             const maxTemp = Math.floor(rng() * (maxTempBase - minTempBase) + minTempBase + 2); 
             const minTemp = maxTemp - Math.floor(rng() * 6 + 4);
 
