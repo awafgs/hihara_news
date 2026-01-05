@@ -1,15 +1,23 @@
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>日原日報オンライン - 最新ニュース</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+        }
+    </script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Noto+Sans+JP:wght@400;500;700&family=Noto+Serif+JP:wght@700&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Noto+Sans+JP:wght@400;500;700&family=Noto+Serif+JP:wght@700&display=swap"
+        rel="stylesheet">
 
     <style>
         /* フォント設定 */
@@ -18,33 +26,48 @@
             background-color: #f8f9fa;
             scroll-behavior: smooth;
         }
-        h1, h2, h3 {
+
+        /* Root font size transition for smooth scaling */
+        html {
+            transition: font-size 0.3s ease-out;
+        }
+
+        h1,
+        h2,
+        h3 {
             font-family: 'Inter', 'Noto Serif JP', serif;
         }
+
         .whitespace-pre-wrap {
             white-space: pre-wrap;
         }
+
         /* カテゴリリストのホバーエフェクト */
         .article-list-item {
             transition: all 0.2s ease-in-out;
         }
+
         .article-list-item:hover {
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
             transform: translateY(-2px);
         }
+
         /* スクロールバーのカスタマイズ */
         ::-webkit-scrollbar {
             width: 8px;
         }
+
         ::-webkit-scrollbar-track {
-            background: #f1f1f1; 
+            background: #f1f1f1;
         }
+
         ::-webkit-scrollbar-thumb {
-            background: #888; 
+            background: #888;
             border-radius: 4px;
         }
+
         ::-webkit-scrollbar-thumb:hover {
-            background: #555; 
+            background: #555;
         }
 
         /* --- ニュースティッカー（天気予報）用CSS --- */
@@ -56,28 +79,34 @@
             border-radius: 9999px;
             position: relative;
         }
-        
+
         .ticker-content {
             display: inline-block;
-            animation: ticker-scroll 50s linear infinite; 
+            animation: ticker-scroll 50s linear infinite;
         }
-        
+
         @keyframes ticker-scroll {
-            0% { transform: translateX(0); }
-            100% { transform: translateX(-50%); } 
+            0% {
+                transform: translateX(0);
+            }
+
+            100% {
+                transform: translateX(-50%);
+            }
         }
-        
+
         .weather-item {
             display: inline-flex;
             align-items: center;
             margin-right: 2rem;
         }
-        
+
         input[type="date"] {
             appearance: none;
             -webkit-appearance: none;
             min-height: 42px;
         }
+
         select {
             appearance: none;
             background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
@@ -91,16 +120,26 @@
             transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
             transform-origin: top right;
         }
+
         #filter-panel.hidden {
             display: none;
         }
+
         #filter-panel:not(.hidden) {
             display: block;
             animation: fadeInScale 0.2s ease-out;
         }
+
         @keyframes fadeInScale {
-            from { opacity: 0; transform: scale(0.95); }
-            to { opacity: 1; transform: scale(1); }
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
         }
 
         /* --- 記事本文（Markdown）のスタイル --- */
@@ -108,6 +147,51 @@
             line-height: 1.8;
             color: #374151;
         }
+
+        /* Global Dark Mode Text Override for Article Boby */
+        .dark .article-body {
+            color: #e5e7eb;
+        }
+
+        .dark .article-body h2,
+        .dark .article-body h3,
+        .dark .article-body strong,
+        .dark .article-body b {
+            color: #f9fafb;
+        }
+
+        .dark .article-body p,
+        .dark .article-body li {
+            color: #d1d5db;
+        }
+
+        .dark .article-body {
+            color: #d1d5db;
+        }
+
+        .dark .article-body h2 {
+            color: #f3f4f6;
+            border-bottom-color: #374151;
+        }
+
+        .dark .article-body h3 {
+            color: #e5e7eb;
+        }
+
+        .dark .article-body strong {
+            color: #f3f4f6;
+            background: linear-gradient(transparent 60%, #7f1d1d 60%);
+        }
+
+        .dark .article-body blockquote {
+            border-left-color: #4b5563;
+            color: #9ca3af;
+        }
+
+        .dark .article-body a {
+            color: #60a5fa;
+        }
+
         .article-body h2 {
             font-size: 1.5rem;
             font-weight: 700;
@@ -117,36 +201,45 @@
             border-bottom: 2px solid #e5e7eb;
             color: #111827;
         }
+
         .article-body h3 {
             font-size: 1.25rem;
             font-weight: 700;
             margin-top: 1.5rem;
             margin-bottom: 0.75rem;
             color: #1f2937;
-            border-left: 4px solid #ef4444; /* 赤いアクセント */
+            border-left: 4px solid #ef4444;
+            /* 赤いアクセント */
             padding-left: 0.75rem;
         }
+
         .article-body p {
             margin-bottom: 1.5rem;
         }
+
         .article-body ul {
             list-style-type: disc;
             padding-left: 1.5rem;
             margin-bottom: 1.5rem;
         }
+
         .article-body ol {
             list-style-type: decimal;
             padding-left: 1.5rem;
             margin-bottom: 1.5rem;
         }
+
         .article-body li {
             margin-bottom: 0.5rem;
         }
+
         .article-body strong {
             font-weight: 700;
             color: #111827;
-            background: linear-gradient(transparent 60%, #fecaca 60%); /* マーカー風 */
+            background: linear-gradient(transparent 60%, #fecaca 60%);
+            /* マーカー風 */
         }
+
         .article-body blockquote {
             border-left: 4px solid #d1d5db;
             padding-left: 1rem;
@@ -154,177 +247,250 @@
             color: #4b5563;
             margin-bottom: 1.5rem;
         }
+
         .article-body a {
             color: #2563eb;
             text-decoration: underline;
         }
+
         .article-body a:hover {
             color: #1d4ed8;
         }
     </style>
 </head>
-<body class="text-gray-900 antialiased">
 
-    <header class="bg-white py-6 border-b-4 border-red-600 shadow-lg relative z-30">
+<body class="text-gray-900 antialiased dark:bg-gray-900 dark:text-gray-100">
+
+    <header
+        class="bg-white dark:bg-gray-800 dark:border-red-900 py-6 border-b-4 border-red-600 shadow-lg relative z-30 transition-colors">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
-                <h1 class="text-4xl md:text-6xl font-extrabold text-gray-900 tracking-tight pb-2 leading-none flex-shrink-0">
+                <h1
+                    class="text-4xl md:text-6xl font-extrabold text-gray-900 dark:text-gray-100 tracking-tight pb-2 leading-none flex-shrink-0">
                     日原日報オンライン
                 </h1>
-                
+
+                <button onclick="toggleDarkMode()"
+                    class="p-3 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600"
+                    title="ダークモード切替">
+                    <!-- Sun Icon -->
+                    <svg id="icon-light" class="w-6 h-6 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z">
+                        </path>
+                    </svg>
+                    <!-- Moon Icon -->
+                    <svg id="icon-dark" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z">
+                        </path>
+                    </svg>
+                </button>
+
                 <div class="w-full lg:w-auto relative">
-                    <div class="flex items-center w-full lg:w-96 bg-gray-100 rounded-full border border-gray-300 focus-within:ring-2 focus-within:ring-red-500 focus-within:border-transparent transition-shadow shadow-sm">
+                    <div
+                        class="flex items-center w-full lg:w-96 bg-gray-100 dark:bg-gray-700 dark:border-gray-600 rounded-full border border-gray-300 focus-within:ring-2 focus-within:ring-red-500 focus-within:border-transparent transition-shadow shadow-sm">
                         <div class="pl-4 text-gray-400">
                             <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                             </svg>
                         </div>
-                        <input type="text" id="search-input" placeholder="キーワード検索..." 
-                            class="w-full px-3 py-3 bg-transparent border-none focus:outline-none text-gray-700 placeholder-gray-500"
+                        <input type="text" id="search-input" placeholder="キーワード検索..."
+                            class="w-full px-3 py-3 bg-transparent border-none focus:outline-none text-gray-700 dark:text-gray-200 placeholder-gray-500 dark:placeholder-gray-400"
                             onkeyup="handleSearch()">
-                        
-                        <button onclick="toggleFilterPanel()" id="filter-toggle-btn" class="pr-2 pl-2 mr-1 py-1.5 text-gray-500 hover:text-red-600 hover:bg-gray-200 rounded-full transition-colors flex items-center gap-1 text-sm font-medium whitespace-nowrap">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
+
+                        <button onclick="toggleFilterPanel()" id="filter-toggle-btn"
+                            class="pr-2 pl-2 mr-1 py-1.5 text-gray-500 hover:text-red-600 hover:bg-gray-200 rounded-full transition-colors flex items-center gap-1 text-sm font-medium whitespace-nowrap">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4">
+                                </path>
+                            </svg>
                             <span class="hidden sm:inline">絞り込み</span>
                         </button>
                     </div>
 
-                    <div id="filter-panel" class="hidden absolute right-0 top-full mt-3 w-full sm:w-80 bg-white rounded-xl shadow-2xl border border-gray-200 p-5 z-50">
-                        <div class="flex justify-between items-center mb-4 border-b pb-2">
-                            <h3 class="font-bold text-gray-700">詳細検索条件</h3>
-                            <button onclick="resetSearch()" class="text-xs text-blue-600 hover:underline">条件をリセット</button>
+                    <div id="filter-panel"
+                        class="hidden absolute right-0 top-full mt-3 w-full sm:w-80 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 p-5 z-50">
+                        <div class="flex justify-between items-center mb-4 border-b dark:border-gray-700 pb-2">
+                            <h3 class="font-bold text-gray-700 dark:text-white">詳細検索条件</h3>
+                            <button onclick="resetSearch()"
+                                class="text-xs text-blue-600 dark:text-blue-400 hover:underline">条件をリセット</button>
                         </div>
-                        
+
                         <div class="space-y-4">
                             <div>
-                                <label class="block text-xs font-bold text-gray-500 mb-1">ジャンル</label>
-                                <select id="search-category" onchange="handleSearch()" 
-                                    class="w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-red-500 text-sm bg-gray-50">
+                                <label
+                                    class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">ジャンル</label>
+                                <select id="search-category" onchange="handleSearch()"
+                                    class="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500 text-sm bg-gray-50">
                                     <option value="">すべてのジャンル</option>
-                                    </select>
+                                </select>
                             </div>
 
                             <div>
-                                <label class="block text-xs font-bold text-gray-500 mb-1">対象期間</label>
+                                <label
+                                    class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">対象期間</label>
                                 <div class="flex flex-col gap-2">
                                     <div class="flex items-center gap-2">
-                                        <span class="text-xs text-gray-400 w-8">開始</span>
-                                        <input type="date" id="search-date-start" 
-                                            class="flex-1 px-2 py-1.5 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-red-500 text-sm"
+                                        <span class="text-xs text-gray-400 dark:text-gray-500 w-8">開始</span>
+                                        <input type="date" id="search-date-start"
+                                            class="flex-1 px-2 py-1.5 rounded border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500 text-sm"
                                             onchange="handleSearch()">
                                     </div>
                                     <div class="flex items-center gap-2">
-                                        <span class="text-xs text-gray-400 w-8">終了</span>
-                                        <input type="date" id="search-date-end" 
-                                            class="flex-1 px-2 py-1.5 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-red-500 text-sm"
+                                        <span class="text-xs text-gray-400 dark:text-gray-500 w-8">終了</span>
+                                        <input type="date" id="search-date-end"
+                                            class="flex-1 px-2 py-1.5 rounded border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500 text-sm"
                                             onchange="handleSearch()">
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        
-                        <div class="mt-4 pt-3 border-t text-right">
-                             <button onclick="toggleFilterPanel()" class="text-sm bg-gray-800 text-white px-4 py-1.5 rounded hover:bg-gray-700 transition">閉じる</button>
+
+                        <div class="mt-4 pt-3 border-t dark:border-gray-700 text-right">
+                            <button onclick="toggleFilterPanel()"
+                                class="text-sm bg-gray-800 dark:bg-gray-700 text-white px-4 py-1.5 rounded hover:bg-gray-700 dark:hover:bg-gray-600 transition">閉じる</button>
                         </div>
                     </div>
-                    
-                    <div id="active-filter-indicator" class="hidden absolute -top-2 -right-2 w-4 h-4 bg-red-500 rounded-full border-2 border-white"></div>
+
+                    <div id="active-filter-indicator"
+                        class="hidden absolute -top-2 -right-2 w-4 h-4 bg-red-500 rounded-full border-2 border-white">
+                    </div>
                 </div>
             </div>
 
-            <div class="flex flex-col md:flex-row justify-between items-center mt-4 border-t pt-2 border-gray-200 gap-4">
-                <p class="header-info text-sm text-gray-600 font-medium whitespace-nowrap hidden md:block">公正な情報を読者に届け、地域の発展と情報の伝達、保管に尽くす。</p>
-                
+            <div
+                class="flex flex-col md:flex-row justify-between items-center mt-4 border-t pt-2 border-gray-200 gap-4">
+                <p
+                    class="header-info text-sm text-gray-600 dark:text-gray-300 font-medium whitespace-nowrap hidden md:block">
+                    公正な情報を読者に届け、地域の発展と情報の伝達、保管に尽くす。</p>
+
                 <div class="flex items-center w-full md:w-auto overflow-hidden space-x-3">
-                    <div id="date-display" class="text-sm font-semibold text-gray-700 whitespace-nowrap flex-shrink-0 border-r border-gray-300 pr-3"></div>
-                    
-                    <div class="ticker-wrap py-1 px-2 shadow-inner">
-                        <div id="weather-ticker-content" class="ticker-content text-sm font-medium text-gray-700">
-                            </div>
+                    <div id="date-display"
+                        class="text-sm font-semibold text-gray-700 dark:text-gray-200 whitespace-nowrap flex-shrink-0 border-r border-gray-300 dark:border-gray-600 pr-3">
+                    </div>
+
+                    <div class="ticker-wrap py-1 px-2 shadow-inner dark:bg-gray-700">
+                        <div id="weather-ticker-content"
+                            class="ticker-content text-sm font-medium text-gray-700 dark:text-gray-200">
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </header>
 
-    <nav class="bg-gray-800 shadow-xl sticky top-0 z-20">
+    <nav class="bg-gray-800 dark:bg-gray-950 shadow-xl sticky top-0 z-20">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <ul id="nav-list" class="flex space-x-4 md:space-x-8 overflow-x-auto py-2">
-                </ul>
+            </ul>
         </div>
     </nav>
 
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10" id="main-content">
-        
+
         <div id="search-result-info" class="hidden mb-6 pb-4 border-b border-gray-300">
-            <h2 class="text-2xl font-bold text-gray-800">
-                検索結果: <span id="search-query-display" class="text-red-600"></span>
-                <span class="text-lg font-normal text-gray-500 ml-2">（<span id="search-count">0</span>件）</span>
+            <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-100">
+                検索結果: <span id="search-query-display" class="text-red-600 dark:text-red-400"></span>
+                <span class="text-lg font-normal text-gray-500 dark:text-gray-400 ml-2">（<span
+                        id="search-count">0</span>件）</span>
             </h2>
-            <button onclick="resetSearch()" class="mt-2 text-sm text-blue-600 hover:underline">検索をリセットして一覧に戻る</button>
+            <button onclick="resetSearch()"
+                class="mt-2 text-sm text-blue-600 dark:text-blue-400 hover:underline">検索をリセットして一覧に戻る</button>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
-            
+
             <main class="lg:col-span-3 space-y-12">
-                
+
                 <section id="categorized-news-container" class="space-y-12">
-                    <h2 class="text-3xl font-bold mb-6 border-b-4 border-gray-400 pb-2">最新記事一覧</h2>
+                    <h2
+                        class="text-3xl font-bold mb-6 border-b-4 border-gray-400 dark:border-gray-600 pb-2 dark:text-white">
+                        最新記事一覧</h2>
                     <div id="loading-initial" class="text-center py-12">
                         <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto mb-4"></div>
-                        <p class="text-gray-600">記事データを読み込み中...</p>
+                        <p class="text-gray-600 dark:text-gray-400">記事データを読み込み中...</p>
                     </div>
                 </section>
-                
+
             </main>
-            
+
             <aside class="lg:col-span-1">
                 <div class="sticky top-20 space-y-8">
-                    
-                    <div class="bg-white p-6 rounded-lg shadow-xl border-t-4 border-gray-400">
-                        <h3 class="text-xl font-bold mb-4 pb-2 border-b">特集</h3>
-                        <p class="text-sm text-gray-700 italic">
-                            「地域の声」を未来へつなぐ。
-                        </p>
-                        <ul class="mt-4 space-y-2">
-                            <li class="border-b pb-2"><a href="#" class="text-sm hover:text-red-600">・フェイクニュースにどう立ち向かう</a></li>
-                            <li class="border-b pb-2"><a href="#" class="text-sm hover:text-red-600">・三梨記者の現場報告</a></li>
-                            <li><a href="#" class="text-sm hover:text-red-600">・地域発：わが町の声</a></li>
+
+                    <!-- Ranking Container -->
+                    <div id="ranking-container"
+                        class="bg-white dark:bg-gray-800 dark:border-gray-600 p-6 rounded-lg shadow-xl border-t-4 border-red-600 dark:border-red-500 hidden">
+                        <h3
+                            class="text-xl font-bold mb-4 pb-2 border-b dark:border-gray-600 dark:text-white flex items-center gap-2">
+                            <span class="text-red-600 dark:text-red-400"></span> 週間ランキング
+                        </h3>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-4 text-right">※過去1週間の記事を集計</p>
+                        <ul id="ranking-list" class="space-y-4">
+                            <!-- Ranking items will be injected here -->
                         </ul>
                     </div>
 
-                    <div class="bg-yellow-50 p-6 rounded-lg border border-yellow-200 shadow-md text-center">
-                        <p class="text-xs font-semibold text-yellow-800 mb-2">【PR】</p>
-                        <h4 class="text-lg font-bold text-gray-800">日原特産フルーツのオンライン販売開始！</h4>
-                        <p class="text-sm text-gray-600 mt-1">今が旬の「日原みかん」を産地直送でお届けします。</p>
-                        <button onclick="location.href='mikan.html'" class="mt-4 bg-red-600 text-white px-4 py-2 rounded-full text-sm font-semibold hover:bg-red-700 transition duration-150 shadow-md">
+                    <div
+                        class="bg-white dark:bg-gray-800 dark:border-gray-600 p-6 rounded-lg shadow-xl border-t-4 border-gray-400">
+                        <h3 class="text-xl font-bold mb-4 pb-2 border-b dark:border-gray-600 dark:text-white">特集</h3>
+                        <p class="text-sm text-gray-700 dark:text-gray-300 italic">
+                            「地域の声」を未来へつなぐ。
+                        </p>
+                        <ul class="mt-4 space-y-2">
+                            <li class="border-b dark:border-gray-700 pb-2"><a href="#"
+                                    class="text-sm hover:text-red-600 dark:text-gray-300 dark:hover:text-red-400">・フェイクニュースにどう立ち向かう</a>
+                            </li>
+                            <li class="border-b dark:border-gray-700 pb-2"><a href="#"
+                                    class="text-sm hover:text-red-600 dark:text-gray-300 dark:hover:text-red-400">・三梨記者の現場報告</a>
+                            </li>
+                            <li><a href="#"
+                                    class="text-sm hover:text-red-600 dark:text-gray-300 dark:hover:text-red-400">・地域発：わが町の声</a>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div
+                        class="bg-yellow-50 dark:bg-yellow-900/30 p-6 rounded-lg border border-yellow-200 dark:border-yellow-700 shadow-md text-center">
+                        <p class="text-xs font-semibold text-yellow-800 dark:text-yellow-500 mb-2">【PR】</p>
+                        <h4 class="text-lg font-bold text-gray-800 dark:text-gray-100">日原特産フルーツのオンライン販売開始！</h4>
+                        <p class="text-sm text-gray-600 dark:text-gray-300 mt-1">今が旬の「日原みかん」を産地直送でお届けします。</p>
+                        <button onclick="location.href='mikan.html'"
+                            class="mt-4 bg-red-600 text-white px-4 py-2 rounded-full text-sm font-semibold hover:bg-red-700 transition duration-150 shadow-md">
                             詳細を見る
                         </button>
                     </div>
 
                 </div>
             </aside>
-            
+
         </div>
     </div>
-    
-    <div id="article-modal" class="fixed inset-0 bg-gray-900 bg-opacity-75 z-50 hidden transition-opacity duration-300 overflow-y-auto">
+
+    <div id="article-modal"
+        class="fixed inset-0 bg-gray-900 bg-opacity-75 z-50 hidden transition-opacity duration-300 overflow-y-auto">
         <div class="flex items-center justify-center min-h-screen p-4">
-            <div class="bg-white w-full max-w-2xl mx-auto rounded-xl shadow-2xl p-6 md:p-8 transform transition-all duration-300">
-                <div class="flex justify-between items-center border-b pb-3 mb-4">
-                    <h2 id="modal-title" class="text-2xl font-bold text-gray-800">記事詳細</h2>
-                    <button onclick="hideArticleContent()" class="text-gray-400 hover:text-gray-600 text-3xl leading-none">&times;</button>
+            <div
+                class="bg-white dark:bg-gray-800 w-full max-w-2xl mx-auto rounded-xl shadow-2xl p-6 md:p-8 transform transition-all duration-300">
+                <div class="flex justify-between items-center border-b dark:border-gray-700 pb-3 mb-4">
+                    <h2 id="modal-title" class="text-2xl font-bold text-gray-800 dark:text-white">記事詳細</h2>
+                    <button onclick="hideArticleContent()"
+                        class="text-gray-400 hover:text-gray-600 text-3xl leading-none">&times;</button>
                 </div>
-                
+
                 <div id="article-content-display">
                 </div>
             </div>
         </div>
     </div>
 
-    <div id="message-box" class="fixed bottom-4 right-4 p-3 rounded-lg shadow-xl z-50 opacity-0 hidden transition-opacity duration-300" role="alert"></div>
+    <div id="message-box"
+        class="fixed bottom-4 right-4 p-3 rounded-lg shadow-xl z-50 opacity-0 hidden transition-opacity duration-300"
+        role="alert"></div>
 
-    <footer class="bg-gray-800 text-white py-8 border-t-4 border-red-600 mt-10">
+    <footer class="bg-gray-800 dark:bg-gray-900 text-white py-8 border-t-4 border-red-600 dark:border-red-900 mt-10">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <p class="text-sm font-light mb-2">© 2025 株式会社日原日報</p>
             <p class="text-xs font-extralight text-gray-400">日原県日原市</p>
@@ -332,22 +498,22 @@
         </div>
     </footer>
 
-<script type="module">
+    <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, query, orderBy, onSnapshot, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, query, orderBy, onSnapshot, setLogLevel, doc, updateDoc, increment, where, limit, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        setLogLevel('silent'); 
+        setLogLevel('silent');
 
         let app, db, auth;
-        let allArticles = []; 
-        let filteredArticles = []; 
-        const MAX_ARTICLES_TO_DISPLAY = 5; 
+        let allArticles = [];
+        let filteredArticles = [];
+        const MAX_ARTICLES_TO_DISPLAY = 5;
 
         const firebaseConfig = {
-            apiKey: "AIzaSyAfMuJXDjc87Q9CwabZNn4sw2fTd3ofHag", 
+            apiKey: "AIzaSyAfMuJXDjc87Q9CwabZNn4sw2fTd3ofHag",
             authDomain: "hiharanippo.firebaseapp.com",
-            projectId: "hiharanippo", 
+            projectId: "hiharanippo",
             storageBucket: "hiharanippo.firebasestorage.app",
             messagingSenderId: "853955512604",
             appId: "1:853955512604:web:dd3e51b06bdd1e2b7292d9",
@@ -355,7 +521,7 @@
         };
 
         const appId = firebaseConfig.appId;
-        const ALLOWED_CATEGORIES = ["日原日報からのお知らせ","社会", "経済・ビジネス", "スポーツ", "政治","IT", "社説・主張"];
+        const ALLOWED_CATEGORIES = ["日原日報からのお知らせ", "社会", "経済・ビジネス", "スポーツ", "政治", "IT", "社説・主張"];
 
         // markedの設定（改行を<br>にするなど）
         if (typeof marked !== 'undefined') {
@@ -367,9 +533,12 @@
 
         async function initFirebase() {
             updateDate();
-            initWeatherTicker(); 
+            initWeatherTicker();
             renderCategoryNav();
             initSearchCategoryOptions();
+
+            // Initialize Theme and Font
+            initTheme();
 
             try {
                 app = initializeApp(firebaseConfig);
@@ -378,6 +547,7 @@
 
                 await signInAnonymously(auth);
                 loadArticles();
+                loadWeeklyRanking(); // Ranking
 
             } catch (error) {
                 console.error("Firebase Init Error:", error);
@@ -388,24 +558,24 @@
         function renderCategoryNav() {
             const navList = document.getElementById('nav-list');
             if (!navList) return;
-            
+
             navList.innerHTML = '';
 
             const topLi = document.createElement('li');
             topLi.innerHTML = `<a href="#main-content" onclick="resetSearch()" class="text-white hover:text-red-400 px-3 py-2 rounded-md text-sm font-medium transition duration-150">トップ一覧</a>`;
             navList.appendChild(topLi);
-            
+
             ALLOWED_CATEGORIES.forEach(category => {
                 const li = document.createElement('li');
                 li.innerHTML = `<a href="#category-${category}" onclick="resetSearch()" class="text-white hover:text-red-400 px-3 py-2 rounded-md text-sm font-medium transition duration-150">${category}</a>`;
                 navList.appendChild(li);
             });
         }
-        
+
         function initSearchCategoryOptions() {
             const select = document.getElementById('search-category');
             if (!select) return;
-            
+
             ALLOWED_CATEGORIES.forEach(category => {
                 const option = document.createElement('option');
                 option.value = category;
@@ -429,19 +599,19 @@
                             if (typeof content === 'string' && content.startsWith('[')) {
                                 content = JSON.parse(content);
                             }
-                        } catch (e) {}
+                        } catch (e) { }
                         tempArticles.push({ id: doc.id, ...data, content: content });
-                    } catch (err) {}
+                    } catch (err) { }
                 });
 
                 allArticles = tempArticles;
-                
+
                 const searchInput = document.getElementById('search-input');
                 const searchDateStart = document.getElementById('search-date-start');
                 const searchDateEnd = document.getElementById('search-date-end');
                 const searchCategory = document.getElementById('search-category');
-                
-                if ((searchInput && searchInput.value.trim() !== '') || 
+
+                if ((searchInput && searchInput.value.trim() !== '') ||
                     (searchDateStart && searchDateStart.value !== '') ||
                     (searchDateEnd && searchDateEnd.value !== '') ||
                     (searchCategory && searchCategory.value !== '')) {
@@ -457,38 +627,136 @@
             });
         }
 
-        window.toggleFilterPanel = function() {
+        async function loadWeeklyRanking() {
+            const articlesRef = collection(db, `artifacts/${appId}/public/data/articles`);
+
+            const now = new Date();
+            const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+            try {
+                const q = query(
+                    articlesRef,
+                    where("timestamp", ">=", oneWeekAgo),
+                    orderBy("timestamp", "desc") // First order by timestamp due to inequality filter
+                );
+
+                // Firestore doesn't support ordering by different field than inequality filter in simple queries without composite index.
+                // Strategy: Fetch last week's articles, then sort by viewCount client-side.
+                // Assuming the number of weekly articles is manageable (e.g. < 100).
+
+                const snapshot = await getDocs(q);
+                let recentArticles = [];
+
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    if (!data.hidden) {
+                        recentArticles.push({ id: doc.id, ...data });
+                    }
+                });
+
+                // Sort by viewCount descending
+                recentArticles.sort((a, b) => (b.viewCount || 0) - (a.viewCount || 0));
+
+                // Take top 5
+                const ranking = recentArticles.slice(0, 5);
+                renderRanking(ranking);
+
+            } catch (e) {
+                console.error("Ranking Load Error:", e);
+            }
+        }
+
+        function renderRanking(articles) {
+            const container = document.getElementById('ranking-container');
+            const list = document.getElementById('ranking-list');
+
+            if (!articles || articles.length === 0) {
+                container.classList.add('hidden');
+                return;
+            }
+
+            container.classList.remove('hidden');
+            list.innerHTML = '';
+
+            articles.forEach((article, index) => {
+                const rank = index + 1;
+                let badgeColor = 'bg-gray-200 text-gray-700';
+                if (rank === 1) badgeColor = 'bg-yellow-400 text-yellow-900';
+                if (rank === 2) badgeColor = 'bg-gray-300 text-gray-800';
+                if (rank === 3) badgeColor = 'bg-orange-300 text-orange-900';
+
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <div class="flex items-start gap-3 cursor-pointer group" onclick="showArticleContent('${article.id}')">
+                        <span class="${badgeColor} w-6 h-6 flex items-center justify-center rounded-full text-xs font-bold flex-shrink-0 mt-0.5 shadow-sm">
+                            ${rank}
+                        </span>
+                        <div>
+                            <h4 class="text-sm font-medium text-gray-800 dark:text-gray-200 group-hover:text-red-600 dark:group-hover:text-red-400 transition leading-snug">
+                                ${article.title || 'タイトルなし'}
+                            </h4>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                ${article.viewCount || 0} views
+                            </p>
+                        </div>
+                    </div>
+                `;
+                list.appendChild(li);
+            });
+        }
+
+        // View Count Logic
+        async function incrementViewCount(articleId) {
+            // Check session storage to prevent multiple counts in same session/tab
+            const sessionKey = `viewed_${articleId}`;
+            if (sessionStorage.getItem(sessionKey)) return;
+
+            try {
+                const articleRef = doc(db, `artifacts/${appId}/public/data/articles`, articleId);
+                await updateDoc(articleRef, {
+                    viewCount: increment(1)
+                });
+                sessionStorage.setItem(sessionKey, 'true');
+
+                // Reload ranking to reflect new count immediately
+                loadWeeklyRanking();
+            } catch (e) {
+                console.warn("Verify Count Error:", e);
+            }
+        }
+
+        window.toggleFilterPanel = function () {
             const panel = document.getElementById('filter-panel');
             const btn = document.getElementById('filter-toggle-btn');
-            if(panel.classList.contains('hidden')) {
+            if (panel.classList.contains('hidden')) {
                 panel.classList.remove('hidden');
-                btn.classList.add('text-red-600', 'bg-gray-200'); 
+                btn.classList.add('text-red-600', 'bg-gray-200');
             } else {
                 panel.classList.add('hidden');
                 btn.classList.remove('text-red-600', 'bg-gray-200');
             }
         }
-        
-        document.addEventListener('click', function(event) {
+
+        document.addEventListener('click', function (event) {
             const panel = document.getElementById('filter-panel');
             const btn = document.getElementById('filter-toggle-btn');
 
             if (!panel || panel.classList.contains('hidden')) return;
 
             if (!panel.contains(event.target) && !btn.contains(event.target)) {
-                 panel.classList.add('hidden');
-                 btn.classList.remove('text-red-600', 'bg-gray-200');
+                panel.classList.add('hidden');
+                btn.classList.remove('text-red-600', 'bg-gray-200');
             }
         });
 
-        window.handleSearch = function() {
+        window.handleSearch = function () {
             const rawQuery = document.getElementById('search-input').value.toLowerCase();
-            const dateStartQuery = document.getElementById('search-date-start').value; 
-            const dateEndQuery = document.getElementById('search-date-end').value; 
+            const dateStartQuery = document.getElementById('search-date-start').value;
+            const dateEndQuery = document.getElementById('search-date-end').value;
             const categoryQuery = document.getElementById('search-category').value;
-            
+
             const keywords = rawQuery.split(/[\s\u3000]+/).filter(k => k.length > 0);
-            
+
             const resultInfo = document.getElementById('search-result-info');
             const queryDisplay = document.getElementById('search-query-display');
             const countDisplay = document.getElementById('search-count');
@@ -499,16 +767,16 @@
                 resetSearch();
                 return;
             }
-            
+
             if (dateStartQuery || dateEndQuery || categoryQuery) {
-                if(indicator) indicator.classList.remove('hidden');
+                if (indicator) indicator.classList.remove('hidden');
                 toggleBtn.classList.add('text-red-600');
             } else {
-                if(indicator) indicator.classList.add('hidden');
-                 const panel = document.getElementById('filter-panel');
-                 if(panel && panel.classList.contains('hidden')) {
+                if (indicator) indicator.classList.add('hidden');
+                const panel = document.getElementById('filter-panel');
+                if (panel && panel.classList.contains('hidden')) {
                     toggleBtn.classList.remove('text-red-600');
-                 }
+                }
             }
 
             filteredArticles = allArticles.filter(article => {
@@ -534,16 +802,16 @@
                             const d = String(articleDate.getDate()).padStart(2, '0');
                             articleDateStr = `${y}-${m}-${d}`;
                         }
-                        
+
                         if (articleDateStr) {
                             if (dateStartQuery && articleDateStr < dateStartQuery) dateMatch = false;
                             if (dateEndQuery && articleDateStr > dateEndQuery) dateMatch = false;
                         } else {
                             dateMatch = false;
                         }
-                    } catch(e) { dateMatch = false; }
+                    } catch (e) { dateMatch = false; }
                 }
-                
+
                 let categoryMatch = true;
                 if (categoryQuery) {
                     categoryMatch = (article.category === categoryQuery);
@@ -553,65 +821,65 @@
             });
 
             resultInfo.classList.remove('hidden');
-            
+
             let conditions = [];
-            
+
             if (categoryQuery) conditions.push(`ジャンル: ${categoryQuery}`);
 
             let dateRangeText = "";
             if (dateStartQuery && dateEndQuery) dateRangeText = `${dateStartQuery} ～ ${dateEndQuery}`;
             else if (dateStartQuery) dateRangeText = `${dateStartQuery} 以降`;
             else if (dateEndQuery) dateRangeText = `${dateEndQuery} まで`;
-            
+
             if (dateRangeText) conditions.push(`期間: ${dateRangeText}`);
             if (keywords.length > 0) conditions.push(`キーワード: ${keywords.join(' ')}`);
-            
+
             queryDisplay.textContent = conditions.join(' / ');
             countDisplay.textContent = filteredArticles.length;
             renderArticles(filteredArticles, true);
         }
 
-        window.resetSearch = function() {
+        window.resetSearch = function () {
             const searchInput = document.getElementById('search-input');
             const searchDateStart = document.getElementById('search-date-start');
             const searchDateEnd = document.getElementById('search-date-end');
             const searchCategory = document.getElementById('search-category');
             const indicator = document.getElementById('active-filter-indicator');
             const toggleBtn = document.getElementById('filter-toggle-btn');
-            
-            if(searchInput) searchInput.value = '';
-            if(searchDateStart) searchDateStart.value = ''; 
-            if(searchDateEnd) searchDateEnd.value = ''; 
-            if(searchCategory) searchCategory.value = ''; 
-            
-            if(indicator) indicator.classList.add('hidden');
+
+            if (searchInput) searchInput.value = '';
+            if (searchDateStart) searchDateStart.value = '';
+            if (searchDateEnd) searchDateEnd.value = '';
+            if (searchCategory) searchCategory.value = '';
+
+            if (indicator) indicator.classList.add('hidden');
             const panel = document.getElementById('filter-panel');
-            if(panel && panel.classList.contains('hidden')) {
-               toggleBtn.classList.remove('text-red-600');
+            if (panel && panel.classList.contains('hidden')) {
+                toggleBtn.classList.remove('text-red-600');
             }
-            
+
             const resultInfo = document.getElementById('search-result-info');
-            if(resultInfo) resultInfo.classList.add('hidden');
+            if (resultInfo) resultInfo.classList.add('hidden');
             renderArticles(allArticles);
         }
 
         function renderArticles(articles, isSearchResult = false) {
             const categorizedContainer = document.getElementById('categorized-news-container');
             const loadingIndicator = document.getElementById('loading-initial');
-            if(loadingIndicator) loadingIndicator.classList.add('hidden');
+            if (loadingIndicator) loadingIndicator.classList.add('hidden');
 
             let generatedHTML = '';
 
             if (articles.length === 0) {
                 const msg = isSearchResult ? '該当する記事は見つかりませんでした。' : '現在、表示できる記事がありません。';
-                generatedHTML = `<p class="text-lg text-gray-500 text-center py-12">${msg}</p>`;
+                generatedHTML = `<p class="text-lg text-gray-500 dark:text-gray-400 text-center py-12">${msg}</p>`;
             } else if (isSearchResult) {
                 generatedHTML = `
                     <div class="space-y-4">
                          ${articles.map(article => {
-                             const categoryClass = getCategoryColor(article.category);
-                             return createListArticleHTML(article, categoryClass.text);
-                         }).join('')}
+                    const categoryClass = getCategoryColor(article.category);
+                    return createListArticleHTML(article, categoryClass.text);
+                }).join('')}
                     </div>
                 `;
             } else {
@@ -630,7 +898,7 @@
 
                     generatedHTML += `
                         <section id="category-${category}" class="pt-8 mb-10 border-t-8 border-gray-200">
-                            <h2 class="text-4xl font-extrabold mb-6 border-l-8 ${categoryClass.border} pl-4 leading-tight text-gray-900">
+                            <h2 class="text-4xl font-extrabold mb-6 border-l-8 ${categoryClass.border} pl-4 leading-tight text-gray-900 dark:text-gray-100">
                                 ${category} <span class="text-base font-semibold text-gray-500 ml-2"></span>
                             </h2>
                             ${articlesInCat.length > 0 ? `
@@ -638,20 +906,20 @@
                                     ${articlesInCat.map(article => createListArticleHTML(article, categoryClass.text)).join('')}
                                 </div>
                             ` : `
-                                <div class="bg-white p-6 rounded-lg text-center border border-gray-100">
-                                    <p class="text-gray-500">現在、記事はありません。</p>
+                                <div class="bg-white dark:bg-gray-800 p-6 rounded-lg text-center border border-gray-100 dark:border-gray-700">
+                                    <p class="text-gray-500 dark:text-gray-400">現在、記事はありません。</p>
                                 </div>
                             `}
                         </section>
                     `;
                 });
-                
-                 if (articlesByCategory['その他'] && articlesByCategory['その他'].length > 0) {
+
+                if (articlesByCategory['その他'] && articlesByCategory['その他'].length > 0) {
                     const otherArticles = articlesByCategory['その他'];
                     const categoryClass = getCategoryColor('その他');
                     generatedHTML += `
                         <section id="category-その他" class="pt-8 mb-10 border-t-8 border-gray-200">
-                            <h2 class="text-4xl font-extrabold mb-6 border-l-8 ${categoryClass.border} pl-4 leading-tight text-gray-900">その他</h2>
+                            <h2 class="text-4xl font-extrabold mb-6 border-l-8 ${categoryClass.border} pl-4 leading-tight text-gray-900 dark:text-white">その他</h2>
                             <div class="space-y-4">
                                 ${otherArticles.map(article => createListArticleHTML(article, categoryClass.text)).join('')}
                             </div>
@@ -672,41 +940,41 @@
                     const day = d.getDate();
                     const hour = String(d.getHours()).padStart(2, '0');
                     const min = String(d.getMinutes()).padStart(2, '0');
-                    
+
                     dateStr = `${year}/${month}/${day} ${hour}:${min}`;
                 }
-            } catch(e) { console.warn(e); }
+            } catch (e) { console.warn(e); }
 
             let newMark = '';
             const now = new Date();
-            const newThreshold = new Date(now.getTime() - 86400000); 
-            
+            const newThreshold = new Date(now.getTime() - 86400000);
+
             let articleDate = null;
             try {
                 articleDate = article.timestamp && typeof article.timestamp.toDate === 'function' ? article.timestamp.toDate() : null;
-            } catch(e) {}
+            } catch (e) { }
 
             if (articleDate && articleDate > newThreshold) {
                 newMark = '<span class="bg-red-600 text-white text-xs font-bold px-2 py-0.5 rounded-full mr-2 inline-block leading-none shadow-sm">NEW</span>';
             }
 
             const summary = article.summary || '';
-            
+
             return `
-                <div class="article-list-item bg-white p-4 rounded-lg shadow-sm border border-gray-100 transition duration-200 cursor-pointer relative group" onclick="showArticleContent('${article.id}')">
+                <div class="article-list-item bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700 transition duration-200 cursor-pointer relative group" onclick="showArticleContent('${article.id}')">
                     
                     <div class="md:flex justify-between items-start">
                         <div class="flex-1 min-w-0 pr-4">
-                            <h4 class="text-xl font-semibold text-gray-900 hover:text-red-700 leading-snug">
+                            <h4 class="text-xl font-semibold text-gray-900 dark:text-gray-100 hover:text-red-700 dark:hover:text-red-400 leading-snug">
                                 ${newMark}${article.title || '(タイトルなし)'}
                             </h4>
-                            <p class="text-sm text-gray-600 line-clamp-1 mt-1">
+                            <p class="text-sm text-gray-600 dark:text-gray-400 line-clamp-1 mt-1">
                                 ${summary}
                             </p>
                         </div>
                         <div class="md:text-right mt-3 md:mt-0 md:pl-4 flex-shrink-0">
                             <p class="text-xs font-bold ${textColorClass} whitespace-nowrap mb-1">${article.category || '未分類'}</p>
-                            <p class="text-xs text-gray-400 whitespace-nowrap">${dateStr}</p>
+                            <p class="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap">${dateStr}</p>
                         </div>
                     </div>
                 </div>
@@ -715,22 +983,25 @@
 
         function getCategoryColor(category) {
             switch (category) {
-                case '日原日報からのお知らせ': return { border: 'border-blue-500', text: 'text-blue-700' };
-                case '社会': return { border: 'border-blue-500', text: 'text-blue-700' };
-                case '経済・ビジネス': return { border: 'border-green-500', text: 'text-green-700' };
-                case 'スポーツ': return { border: 'border-red-500', text: 'text-red-700' };
-                case '政治': return { border: 'border-purple-500', text: 'text-purple-700' };
-                case '社説・主張': return { border: 'border-yellow-600', text: 'text-yellow-800' };
-                default: return { border: 'border-gray-500', text: 'text-gray-700' };
+                case '日原日報からのお知らせ': return { border: 'border-blue-500', text: 'text-blue-700 dark:text-blue-400' };
+                case '社会': return { border: 'border-blue-500', text: 'text-blue-700 dark:text-blue-400' };
+                case '経済・ビジネス': return { border: 'border-green-500', text: 'text-green-700 dark:text-green-400' };
+                case 'スポーツ': return { border: 'border-red-500', text: 'text-red-700 dark:text-red-400' };
+                case '政治': return { border: 'border-purple-500', text: 'text-purple-700 dark:text-purple-400' };
+                case '社説・主張': return { border: 'border-yellow-600', text: 'text-yellow-800 dark:text-yellow-500' };
+                default: return { border: 'border-gray-500', text: 'text-gray-700 dark:text-gray-400' };
             }
         }
 
-        window.showArticleContent = function(articleId) {
-            const article = allArticles.find(a => a.id === articleId); 
+        window.showArticleContent = function (articleId) {
+            const article = allArticles.find(a => a.id === articleId);
             if (!article) {
                 showMessage('記事が見つかりませんでした。', 'error');
                 return;
             }
+
+            // Increment View Count
+            incrementViewCount(articleId);
 
             const modal = document.getElementById('article-modal');
             const articleDisplay = document.getElementById('article-content-display');
@@ -744,14 +1015,14 @@
                 const day = d.getDate();
                 const hour = String(d.getHours()).padStart(2, '0');
                 const min = String(d.getMinutes()).padStart(2, '0');
-                
+
                 dateStr = `${year}年${month}月${day}日 ${hour}:${min}`;
             }
-            
+
             // 本文の取得とMarkdown変換
             let articleHtml = '';
             let rawContent = '';
-            
+
             // 古いデータ形式(配列)と新しいデータ形式(文字列)の両対応
             if (Array.isArray(article.content)) {
                 rawContent = article.content.join('\n');
@@ -768,7 +1039,7 @@
                 // フォールバック（改行だけ置換）
                 articleHtml = rawContent.replace(/\n/g, '<br>');
             }
-            
+
             const categoryClass = getCategoryColor(article.category);
 
             modalTitle.textContent = '記事詳細';
@@ -776,28 +1047,28 @@
                 <div class="h-[70vh] overflow-y-auto pr-4 relative">
                     <div class="flex justify-between items-start mb-4">
                         <div class="flex-1">
-                            <h2 class="text-3xl font-extrabold mb-2 text-gray-900 leading-tight">${article.title || '(タイトルなし)'}</h2>
+                            <h2 class="text-3xl font-extrabold mb-2 text-gray-900 dark:text-white leading-tight">${article.title || '(タイトルなし)'}</h2>
                             <p class="text-sm font-semibold ${categoryClass.text} mb-1">${article.category || '未分類'}</p>
-                            <p class="text-sm text-gray-500">公開日: ${dateStr}</p>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">公開日: ${dateStr}</p>
                         </div>
                     </div>
                     
-                    <p class="text-lg italic text-gray-700 mb-6 border-l-4 border-gray-300 pl-3 bg-gray-50 py-2 rounded-r">${article.summary || ''}</p>
+                    <p class="text-lg italic text-gray-700 dark:text-gray-300 mb-6 border-l-4 border-gray-300 dark:border-gray-600 pl-3 bg-gray-50 dark:bg-gray-700 py-2 rounded-r">${article.summary || ''}</p>
                     
                     <div class="article-body font-serif text-lg leading-relaxed">
                         ${articleHtml}
                     </div>
                     
-                    <div class="mt-10 border-t pt-6 text-center">
-                         <button onclick="hideArticleContent()" class="bg-gray-800 text-white px-6 py-3 rounded-full hover:bg-gray-700 transition">記事を閉じる</button>
+                    <div class="mt-10 border-t dark:border-gray-700 pt-6 text-center">
+                         <button onclick="hideArticleContent()" class="bg-gray-800 dark:bg-gray-700 text-white px-6 py-3 rounded-full hover:bg-gray-700 dark:hover:bg-gray-600 transition">記事を閉じる</button>
                     </div>
                 </div>
             `;
-            
+
             modal.classList.remove('hidden');
         }
-        
-        window.hideArticleContent = function() {
+
+        window.hideArticleContent = function () {
             document.getElementById('article-modal').classList.add('hidden');
         }
 
@@ -806,11 +1077,10 @@
             if (!messageBox) return;
 
             messageBox.textContent = message;
-            messageBox.className = `fixed bottom-4 right-4 p-3 rounded-lg shadow-xl z-50 transition-opacity duration-300 ${
-                type === 'success' ? 'bg-green-500 text-white' : 
-                type === 'error' ? 'bg-red-600 text-white' : 
-                'bg-blue-500 text-white'
-            }`;
+            messageBox.className = `fixed bottom-4 right-4 p-3 rounded-lg shadow-xl z-50 transition-opacity duration-300 ${type === 'success' ? 'bg-green-500 text-white' :
+                type === 'error' ? 'bg-red-600 text-white' :
+                    'bg-blue-500 text-white'
+                }`;
             messageBox.classList.remove('opacity-0', 'hidden');
             messageBox.classList.add('opacity-100');
 
@@ -822,12 +1092,12 @@
         }
 
         function renderLoadError(message) {
-             const container = document.getElementById('categorized-news-container');
-             const loadingIndicator = document.getElementById('loading-initial');
-             if(loadingIndicator) loadingIndicator.classList.add('hidden');
-             if(container) container.innerHTML = `<p class="text-red-600 text-center py-12 bg-red-50 rounded-lg border border-red-200">${message}</p>`;
+            const container = document.getElementById('categorized-news-container');
+            const loadingIndicator = document.getElementById('loading-initial');
+            if (loadingIndicator) loadingIndicator.classList.add('hidden');
+            if (container) container.innerHTML = `<p class="text-red-600 text-center py-12 bg-red-50 rounded-lg border border-red-200">${message}</p>`;
         }
-        
+
         function updateDate() {
             const dateDisplay = document.getElementById('date-display');
             if (dateDisplay) {
@@ -837,7 +1107,7 @@
         }
 
         function createSeededRandom(seed) {
-            return function() {
+            return function () {
                 let t = seed += 0x6D2B79F5;
                 t = Math.imul(t ^ t >>> 15, t | 1);
                 t ^= t + Math.imul(t ^ t >>> 7, t | 61);
@@ -850,7 +1120,7 @@
             if (!tickerContent) return;
 
             const now = new Date();
-            const jstOffset = 9 * 60; 
+            const jstOffset = 9 * 60;
             const jstDate = new Date(now.getTime() + (now.getTimezoneOffset() + jstOffset) * 60000);
             const seedDateInt = jstDate.getFullYear() * 10000 + (jstDate.getMonth() + 1) * 100 + jstDate.getDate();
 
@@ -858,29 +1128,29 @@
             const jstMonth = jstDate.getMonth() + 1;
 
             const cities = ['日原', '大瓦', '葉間', '英北', '得湧', '神滋', '岩城', '松津', '船黒', '駒谷', '姫園', '八木橋'];
-            
+
             const weatherDataList = cities.map(city => generateRandomWeatherForCity(city, jstMonth, rng));
-            
+
             const htmlSet = weatherDataList.map(w => createWeatherItemHTML(w)).join('');
-            tickerContent.innerHTML = htmlSet + htmlSet; 
+            tickerContent.innerHTML = htmlSet + htmlSet;
         }
 
         function generateRandomWeatherForCity(cityName, month, rng) {
             let minTempBase, maxTempBase, allowedWeathers;
 
             if (month === 12 || month === 1 || month === 2) {
-                minTempBase = -2; maxTempBase = 11; 
-                allowedWeathers = ['sunny', 'sunny', 'cloudy', 'cloudy', 'snow']; 
+                minTempBase = -2; maxTempBase = 11;
+                allowedWeathers = ['sunny', 'sunny', 'cloudy', 'cloudy', 'snow'];
             } else if (month >= 3 && month <= 5) {
                 minTempBase = 8; maxTempBase = 23;
-                allowedWeathers = ['sunny', 'sunny', 'cloudy', 'rain']; 
+                allowedWeathers = ['sunny', 'sunny', 'cloudy', 'rain'];
             } else if (month >= 6 && month <= 9) {
                 minTempBase = 23; maxTempBase = 35;
-                allowedWeathers = ['sunny', 'sunny', 'sunny', 'cloudy', 'rain', 'rain']; 
+                allowedWeathers = ['sunny', 'sunny', 'sunny', 'cloudy', 'rain', 'rain'];
             } else {
-                if (month === 11) { minTempBase = 5; maxTempBase = 15; } 
+                if (month === 11) { minTempBase = 5; maxTempBase = 15; }
                 else { minTempBase = 10; maxTempBase = 22; }
-                allowedWeathers = ['sunny', 'cloudy', 'rain']; 
+                allowedWeathers = ['sunny', 'cloudy', 'rain'];
             }
 
             const weatherIcons = {
@@ -893,7 +1163,7 @@
             const selectedKey = allowedWeathers[Math.floor(rng() * allowedWeathers.length)];
             const weatherInfo = weatherIcons[selectedKey];
 
-            const maxTemp = Math.floor(rng() * (maxTempBase - minTempBase) + minTempBase + 2); 
+            const maxTemp = Math.floor(rng() * (maxTempBase - minTempBase) + minTempBase + 2);
             const minTemp = maxTemp - Math.floor(rng() * 6 + 4);
 
             return {
@@ -909,21 +1179,84 @@
         function createWeatherItemHTML(data) {
             return `
                 <div class="weather-item">
-                    <span class="text-xs text-gray-500 mr-1 font-bold">${data.city}</span>
+                    <span class="text-xs text-gray-500 dark:text-gray-400 mr-1 font-bold">${data.city}</span>
                     <span class="${data.color} flex items-center mr-2">
                         <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${data.iconPath}"></path></svg>
                         ${data.name}
                     </span>
                     <span class="">
-                        <span class="text-red-600 font-bold">${data.max}℃</span>
-                        <span class="text-gray-400 mx-0.5">/</span>
-                        <span class="text-blue-600 font-bold">${data.min}℃</span>
+                        <span class="text-red-600 dark:text-red-400 font-bold">${data.max}℃</span>
+                        <span class="text-gray-400 dark:text-gray-500 mx-0.5">/</span>
+                        <span class="text-blue-600 dark:text-blue-400 font-bold">${data.min}℃</span>
                     </span>
                 </div>
             `;
         }
 
         window.onload = initFirebase;
+
+        // --- Theme & Font Size Logic ---
+
+        window.toggleDarkMode = function () {
+            const html = document.documentElement;
+            if (html.classList.contains('dark')) {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            } else {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            }
+            updateThemeIcons();
+        }
+
+        window.initTheme = function () {
+            const savedTheme = localStorage.getItem('theme');
+            const html = document.documentElement;
+            if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                html.classList.add('dark');
+            } else {
+                html.classList.remove('dark');
+            }
+            updateThemeIcons();
+        }
+
+        window.updateThemeIcons = function () {
+            const isDark = document.documentElement.classList.contains('dark');
+            const iconLight = document.getElementById('icon-light');
+            const iconDark = document.getElementById('icon-dark');
+
+            if (iconLight && iconDark) {
+                if (isDark) {
+                    iconLight.classList.remove('hidden');
+                    iconDark.classList.add('hidden');
+                } else {
+                    iconLight.classList.add('hidden');
+                    iconDark.classList.remove('hidden');
+                }
+            }
+        }
+
+        window.changeFontSize = function (size) {
+            const body = document.body;
+            body.style.fontSize = ''; // Reset
+
+            if (size === 'large') {
+                body.style.fontSize = '125%'; // 20px
+            } else if (size === 'medium') {
+                body.style.fontSize = '112.5%'; // 18px
+            } else {
+                body.style.fontSize = '100%'; // 16px
+            }
+            localStorage.setItem('fontSize', size);
+        }
+
+        window.initFontSize = function () {
+            const savedSize = localStorage.getItem('fontSize');
+            if (savedSize) {
+                window.changeFontSize(savedSize);
+            }
+        }
     </script>
 </body>
+
 </html>
